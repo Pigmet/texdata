@@ -389,6 +389,8 @@
   [[cmd width f]]
   (format "\\%s[width=%s]{%s}" (name cmd) (tex width) (tex f)))
 
+(defexample :includegraphics [:includegraphics "5cm" "apple.png"])
+
 ;;;;;;;;;;;;;;;;
 ;; basic math ;;
 ;;;;;;;;;;;;;;;;
