@@ -208,33 +208,22 @@
 
 ;; preamble
 
-(def ^:private standard-options
-  {:package ["amsmath" "xcolor" "amssymb" "multirow"]
-   :class "article"})
-
 (s/def ::documentclass-spec
-  (s/cat :cmd #{:documentclass}
-         :class (s/? string?)
-         :opts (s/? (s/coll-of string?))))
+  (s/cat :cmd keyword?
+         :class any?
+         :opts (s/* any?)))
 
-(defcmd :documentclass :normal [data]
-  {:pre[(check-arg :documentclass
-                   (s/valid? ::documentclass-spec data)
-                   data)]}
-  (let [{:keys [cmd class opts]
-         :or
-         {class (get standard-options :class)
-          opts (get standard-options :package)}}
-        (s/conform ::documentclass-spec data)]
-    (-> (str "\\" (name cmd))
-        (str (format "[%s]" (join "," opts)))
-        (str (format "{%s}" class)))))
+(defcmd :documentclass :normal
+  [data]
+  {:pre[(check-arg :documentclass (s/valid? ::documentclass-spec data) data)]}
+  (let [{cl :class cmd :cmd opts :opts}
+        (s/conform ::documentclass-spec data)
+        cmd (name cmd)]
+    (format "\\%s[%s]{%s}" cmd
+            (join "," (map tex opts))
+            (tex cl))))
 
-(defexample :documentclass
-  #{[:documentclass]
-    [:documentclass "article"]
-    [:documentclass "article" ["a4paper" "12pt"]]
-    })
+(defexample :documentclass [:documentclass "article" "12pt"])
 
 (s/def ::package-spec (s/cat
                        :cmd keyword?
@@ -242,11 +231,11 @@
                        :opts (s/* any?)))
 
 (defcmd :package :normal [data]
-  {:pre[(check-arg :package (s/valid? ::package-spec data) data)]}
-  (let [{:keys [cmd package opts]} (s/conform ::package-spec data)]
-    (cond-> "\\usepackage"
-      (seq opts) (str (format "[%s]" (join "," opts)))
-      true (str (format "{%s}" (name package))))))
+{:pre[(check-arg :package (s/valid? ::package-spec data) data)]}
+(let [{:keys [cmd package opts]} (s/conform ::package-spec data)]
+  (cond-> "\\usepackage"
+    (seq opts) (str (format "[%s]" (join "," opts)))
+    true (str (format "{%s}" (name package))))))
 
 (defexample :package [:package :geometry "landscape" "margin=2in"])
 
@@ -255,7 +244,7 @@
 (defcmd :title :normal)
 
 (defcmd :author :normal [[_ & args]]
-  (format "\\author{%s}" (join " \\and " (map tex args))))
+(format "\\author{%s}" (join " \\and " (map tex args))))
 
 (defcmd :date :normal)
 
@@ -270,16 +259,16 @@
 (defcmd :underline :normal)
 
 (defcmd :bold :normal [[_ & args]]
-  (format "\\textbf{%s}" (join " " (map tex args))))
+(format "\\textbf{%s}" (join " " (map tex args))))
 
 (defcmd :italic :normal [[_ & args]]
-  (format "\\textit{%s}" (join " " (map tex args))))
+(format "\\textit{%s}" (join " " (map tex args))))
 
 (defcmd :color :normal
-  [[_ cl & args :as data]]
-  {:pre [(check-arg :color (string? cl) data
-                    {:comment "The first argument specifies color."})]}
-  (format "\\textcolor{%s}{%s}" cl (tex args)))
+[[_ cl & args :as data]]
+{:pre [(check-arg :color (string? cl) data
+                  {:comment "The first argument specifies color."})]}
+(format "\\textcolor{%s}{%s}" cl (tex args)))
 
 (defexample :color [:color "red" 1])
 
@@ -288,40 +277,40 @@
 ;;;;;;;;;;;;;
 
 (defcmd :math :normal [[_ & args]]
-  (format "\\[ %s \\]" (join " " (map tex args))))
+(format "\\[ %s \\]" (join " " (map tex args))))
 
 (defcmd :frac :normal
-  [[_ x y]] (apply format "\\frac{%s}{%s}" (map tex [x y])))
+[[_ x y]] (apply format "\\frac{%s}{%s}" (map tex [x y])))
 
 (defexample :frac [:frac 1 2])
 
 (defcmd :dollar :normal [[_ & args]]
-  (format "$%s$" (join " " (map tex args))))
+(format "$%s$" (join " " (map tex args))))
 
 (defexample :dollar [:dollar [:int "f"] :eq [:frac 1 2]])
 
 (defcmd :pow :normal [[_ n x]]
-  (format "%s^{%s}" (tex x) (tex n)))
+(format "%s^{%s}" (tex x) (tex n)))
 
 (defexample :pow [:pow 2 "x"])
 
 (defcmd :sub :normal [[_ n x]]
-  ( format "%s_{%s}" (tex x) (tex n)))
+( format "%s_{%s}" (tex x) (tex n)))
 
 (defexample :sub [:sub 2 "a"])
 
 (s/def ::int-opts-spec
-  (s/cat :from (s/? any?) :to (s/? any?)))
+(s/cat :from (s/? any?) :to (s/? any?)))
 
 (s/def ::int-spec
-  (s/cat :cmd keyword?
-         :arg any?
-         :opts ::int-opts-spec))
+(s/cat :cmd keyword?
+       :arg any?
+       :opts ::int-opts-spec))
 
 (defn- int-opts-string [{:keys [from to]}]
-  (cond-> ""
-    from (str (format "_{%s}" (tex from)))
-    to (str (format "^{%s}" (tex to)))))
+(cond-> ""
+  from (str (format "_{%s}" (tex from)))
+  to (str (format "^{%s}" (tex to)))))
 
 (defcmd :int :normal [data]
   {:pre [(check-arg :int (s/valid? ::int-spec data) data)]}
