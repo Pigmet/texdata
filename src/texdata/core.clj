@@ -381,6 +381,14 @@
    "first item" 1
    "second item" 2])
 
+;;;;;;;;;;;;;;
+;; graphics ;;
+;;;;;;;;;;;;;;
+
+(defcmd :includegraphics :normal
+  [[cmd width f]]
+  (format "\\%s[width=%s]{%s}" (name cmd) (tex width) (tex f)))
+
 ;;;;;;;;;;;;;;;;
 ;; basic math ;;
 ;;;;;;;;;;;;;;;;
@@ -466,7 +474,6 @@
 (defcmd :vmatrix :environment)
 
 (defcmd :Vmatrix :environment)
-
 
 ;;;;;;;;;;;;
 ;; table  ;;
