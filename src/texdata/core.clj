@@ -47,7 +47,7 @@
          handle-decorated
          tex)
 
-(defmulti data->string tex-data-type)
+(defmulti  data->string {:private true} tex-data-type)
 
 (defmethod data->string :default [x]
   (case (tex-data-type x)
@@ -62,11 +62,14 @@
 (def ^:private no-whitespace-things
   #{"," "." ";" ":"})
 
-(defn tex [& args] (reduce
-                    (fn [acc s] (if (no-whitespace-things s)
-                                  (str acc s)
-                                  (str acc " " s)))
-                    (map data->string args)))
+(defn tex
+  "Converts data to string recognizable by TeX."
+  [& args]
+  (reduce
+   (fn [acc s] (if (no-whitespace-things s)
+                 (str acc s)
+                 (str acc " " s)))
+   (map data->string args)))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;; tex threading  ;;
@@ -85,7 +88,8 @@
   [& args]
   ( tex (concat (butlast args) (last args) )))
 
-(defn tex-> [exp & args]
+(defn tex->
+  [exp & args]
   (let [data (s/conform ::tex-arrow-spec args)]
     (reduce (fn [acc [k v]]
               (case k
@@ -128,7 +132,7 @@
           (join (map data->string args))
           (name cmd)))
 
-(defmulti normal-command first)
+(defmulti normal-command {:private true} first)
 
 (defmethod normal-command :default [[cmd & args]]
   (format "\\%s{%s}"
@@ -136,8 +140,6 @@
           (join
            " "
            (map data->string args))))
-
-(defmulti normal-command first)
 
 (defn- handle-command [[cmd & _ :as data]]
   (case (get-command cmd)
@@ -170,7 +172,7 @@
            (defmethod ~imple-f ~id ~@body))
       `(register-command ~id ~type))))
 
-(defmulti example identity)
+(defmulti example {:private true} identity)
 
 (defmethod example :default [_] nil)
 
@@ -188,10 +190,11 @@
                    (format "invalid input for %s" cmd-key)
                    m))))
 
-(defmacro check-arg
+(defmacro  check-arg
   "Evaluates test and throws exception when the result is logical falsse.
   cmd-key is a keyword for a specific tex command, for which the test
   checks the validity of input as its argument(s)."
+  {:private true}
   ([cmd-key test input] `(check-arg ~cmd-key ~test ~input {}))
   ([cmd-key test input m]
    (let [expl (example cmd-key)
