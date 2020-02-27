@@ -172,7 +172,7 @@
            (defmethod ~imple-f ~id ~@body))
       `(register-command ~id ~type))))
 
-(defmulti example {:private true} identity)
+(defmulti example  identity)
 
 (defmethod example :default [_] nil)
 

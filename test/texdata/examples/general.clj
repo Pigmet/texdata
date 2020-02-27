@@ -10,7 +10,7 @@
    :multirow []
    :enumerate []
    :geometry ["left = 20mm" "right = 20mm"]
-   :graphicx ["dvipdfmx"]})
+   :graphicx []})
 
 (defn- package-text []
   (reduce-kv
@@ -18,8 +18,7 @@
    ""
    standard-packages))
 
-(def test-path
-  "/Users/naka/Documents/work/tex/misc/demo/test.tex" )
+(def test-path "test/texdata/examples/out/test.tex")
 
 (defn- demo-text [s &{:keys [font] :or {font :huge}}]
   (tex [:documentclass "article"]
@@ -30,7 +29,8 @@
   (let [s (demo-text (tex args))]
     (compile-and-view test-path s)))
 
-(defn prob [& args]
-  (tex [:text "Pr"] [:paren :square (tex args)]))
+(example :includegraphics)
 
-;;(demo [:math 1])
+(demo
+"Graphics demo"
+ [:includegraphics "5cm" "Sample.png"])
