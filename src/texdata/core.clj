@@ -28,10 +28,10 @@
 (defn- register-decorator [& kvs]
   (register-impl decorator-reposity kvs))
 
-
-
-
 (s/def ::tex-spec
   (s/or
    :literal (some-fn string? number?)))
+
+
+hoge 
 
