@@ -86,6 +86,43 @@
 (defmethod data->string :independent [x]
   (if-let [s (-> x get-command :s)] (str "\\" s ) (str "\\" (name x))))
 
+(defn- conform-command [data]
+  (s/conform ::command-spec data))
+
+(defmulti env-command {:private true} identity)
+
+(defmulti normal-command {:private true} identity)
+
+(defmethod env-command :default [[cmd & args]]
+  (format "\\begin{%s} &s \\end{%s}"
+          (name cmd)
+          (tex args)
+          (name cmd)))
+
+(defmethod normal-command :default [[cmd & args]]
+  (format "\\%s{%s}" (name cmd) (tex args)))
+
+(s/def ::defcmd-spec
+  (s/cat :id keyword?
+         :type #{:environment :normal :independent}
+         :body (s/+ any?)))
+
+(defmacro defcmd [id type & body]
+  {:pre [(s/valid? ::defcmd-spec (list* id type body))]}
+  (let [{:keys [id type body]} (s/conform ::defcmd-spec (list* id type body))
+        fn-table {:environment `env-command
+                  :normal `normal-command}
+        default? (-> body first (= :default))]
+    (cond
+      default? `(register-command ~id ~type)
+      (= type :independent) `(register-command ~id ~type ~(first body))
+      :else `(do
+               (register-command ~id ~type)
+               (defmethod ~(get fn-table type) ~id ~@body)))))
+
+(defcmd :int :normal :default)
+
+(tex [:int 1])
 
 
 
