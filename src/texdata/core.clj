@@ -40,7 +40,7 @@
   (s/+ (s/cat :k get-decorator :v any?)))
 
 (s/def ::command-spec
-  (s/cat :cmd get-command :opt map? :args (s/* any?)))
+  (s/cat :cmd get-command :opt (s/? map?) :args (s/* any?)))
 
 (s/def ::tex-spec
   (s/or
@@ -77,6 +77,9 @@
    (tex data)
    m))
 
+(defn- decorate-tex [data m]
+  (decorate-tex-impl data @decorator-reposity m))
+
 (register-decorator :pow tex-pow :sub tex-sub)
 
 (defmethod data->string :decorated [[v & more]]
@@ -89,25 +92,37 @@
 (defn- conform-command [data]
   (s/conform ::command-spec data))
 
-(defmulti env-command {:private true} identity)
+(defmulti env-command {:private true} first)
 
-(defmulti normal-command {:private true} identity)
+(defmulti normal-command {:private true} first)
 
-(defmethod env-command :default [[cmd & args]]
-  (format "\\begin{%s} &s \\end{%s}"
-          (name cmd)
-          (tex args)
-          (name cmd)))
+(defmethod data->string :command [data]
+  (case (-> data first get-command :type)
+    :normal (normal-command data)
+    :environment (env-command data)))
 
-(defmethod normal-command :default [[cmd & args]]
-  (format "\\%s{%s}" (name cmd) (tex args)))
+(defmethod env-command :default [data]
+  (let[{:keys [cmd opt args]} (conform-command data)
+       cmd (if-let [s (-> cmd get-command :s)] s (name cmd))]
+    (-> (format "\\begin{%s}" cmd)
+        (decorate-tex-impl @decorator-reposity opt)
+        (str (format " %s \\end{%s}" (tex args) cmd)))))
+
+(defmethod normal-command :default [data]
+  (let[{:keys [cmd opt args]} (conform-command data)
+       cmd (if-let [s (-> cmd get-command :s)] s (name cmd))]
+    (-> (format "\\%s" cmd)
+        (decorate-tex-impl @decorator-reposity opt)
+        (str (format "{%s}" (tex args)))))) 
 
 (s/def ::defcmd-spec
   (s/cat :id keyword?
          :type #{:environment :normal :independent}
          :body (s/+ any?)))
 
-(defmacro defcmd [id type & body]
+(defmacro defcmd
+  "Defines a new tex command."
+  [id type & body]
   {:pre [(s/valid? ::defcmd-spec (list* id type body))]}
   (let [{:keys [id type body]} (s/conform ::defcmd-spec (list* id type body))
         fn-table {:environment `env-command
@@ -120,9 +135,29 @@
                (register-command ~id ~type)
                (defmethod ~(get fn-table type) ~id ~@body)))))
 
-(defcmd :int :normal :default)
+(def ^:private  example-repository (atom{}))
 
-(tex [:int 1])
+(defn register-example [& kvs]
+  (doseq [[k v] (partition 2 kvs)]
+    (swap! example-repository assoc k v)
+    @example-repository))
+
+(defn example [id] (get @example-repository id))
+
+;; commands
+
+(defcmd :int :normal [data]
+  (let [{:keys [opt args]} (conform-command data)]
+    (-> "\\int"
+        (decorate-tex opt)
+        (str (format " %s" (tex args))))))
+
+(register-decorator
+ :from tex-sub
+ :on tex-sub
+ :to tex-pow)
+
+(tex [:int {:from 0 :to 1} "f"  1 2])
 
 
 
