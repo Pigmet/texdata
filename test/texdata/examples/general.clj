@@ -28,8 +28,28 @@
    test-path
    (demo-string args)))
 
+(comment
 
+  (def t1
+    (tex->
+     ["x" :amp :eq 1 :next "y" :amp :eq 2]
+     :align*
+     :Huge))
 
+  (def t2
+    (tex-> [[:frac 1 2] [:int {:from 0 :to :infty} "f(x) dx"] ]
+           :math
+           :huge))
 
+  (def t3
+    (tex-> [[:left :curly]
+            [:array "cc"
+             "x" :amp :eq 1 :next
+             "y" :amp :eq 2 ]
+            [:right :none]]
+           :equation
+           :Huge))
 
-
+  (view t3)
+  
+  )
