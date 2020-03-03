@@ -12,25 +12,22 @@
    :geometry ["left = 20mm" "right = 20mm"]
    :graphicx []})
 
-(defn- package-text []
-  (reduce-kv
-   (fn [acc k v] (str acc  (tex-apply :package (name k) v) "\n"))
-   ""
-   standard-packages))
-
 (def test-path "test/texdata/examples/out/test.tex")
 
-(defn- demo-text [s &{:keys [font] :or {font :huge}}]
+(defn- demo-string [coll]
   (tex [:documentclass "article"]
-       (package-text)
-       [:document [font s]]))
+       (reduce-kv
+        (fn [acc k v]
+          (str acc (tex [:usepckage {:opt v} (name k)])))
+        ""
+        standard-packages)
+       [:document (tex coll)]))
 
-(defn- demo [& args]
-  (let [s (demo-text (tex args))]
-    (compile-and-view test-path s)))
+(defn view [& args]
+  (compile-and-view
+   test-path
+   (demo-string args)))
 
-(example :includegraphics)
+(view 1)
 
-(demo
-"Graphics demo"
- [:includegraphics "5cm" "Sample.png"])
+

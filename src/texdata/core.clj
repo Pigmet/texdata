@@ -178,8 +178,8 @@
 
 (s/def ::documentclass-spec
   (s/cat :cmd keyword?
-         :opt (s/? (s/map-of #{:opt} (s/coll-of string?)))
-         :args string?))
+         :opt (s/? (s/map-of #{:opt} (s/coll-of any?)))
+         :args any?))
 
 (register-example
  :documentclass
@@ -207,6 +207,8 @@
 
 (register-example :usepckage
                   #{[:usepckage "xcolor"]})
+
+(defcmd :document :environment :default)
 
 ;; formatting text
 
