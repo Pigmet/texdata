@@ -146,6 +146,17 @@
 
 ;; commands
 
+(defmacro pre-check-tex [test id data]
+  (let[m {:input data}
+       ex (example id)
+       m (if ex (assoc m :expected-input ex) m)]
+    `(or ~test
+         (throw
+          (ex-info ~(format "invalid input for %s" id)
+                   ~m)))))
+
+;; basic math 
+
 (defcmd :int :normal [data]
   (let [{:keys [opt args]} (conform-command data)]
     (-> "\\int"
@@ -157,7 +168,58 @@
  :on tex-sub
  :to tex-pow)
 
-(tex [:int {:from 0 :to 1} "f"  1 2])
+(defcmd :math :normal [[_ & args]]
+  (format "\\[ %s \\]" (tex args)))
+
+(defcmd :frac :normal [[_ x y]]
+  (format "\\frac{%s}{%s}" (tex x) (tex y)))
+
+;; preamble
+
+(s/def ::documentclass-spec
+  (s/cat :cmd keyword?
+         :opt (s/? (s/map-of #{:opt} (s/coll-of string?)))
+         :args string?))
+
+(register-example
+ :documentclass
+ [:documentclass {:opt ["a4paper" "12pt"]} "article"])
+
+(defcmd :documentclass :normal [data]
+  {:pre[(pre-check-tex
+         (s/valid? ::documentclass-spec data)
+         :documentclass
+         data)]}
+  (let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
+    (cond-> "\\documentclass"
+      opt (str (format "[%s]"(join "," opt)))
+      true (str (format "{%s}" (first args))))))
+
+(defcmd :usepckage :normal [data]
+  {:pre[(pre-check-tex
+         (s/valid? ::documentclass-spec data)
+         :usepckage
+         data)]}
+  (let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
+    (cond-> "\\usepckage"
+      opt (str (format "[%s]"(join "," opt)))
+      true (str (format "{%s}" (first args))))))
+
+(register-example :usepckage
+                  #{[:usepckage "xcolor"]})
+
+;; formatting text
+
+(defcmd :huge :environment :default)
+
+(defcmd :Huge :environment :default)
+
+
+
+
+
+
+
 
 
 
