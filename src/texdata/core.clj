@@ -192,7 +192,7 @@
          data)]}
   (let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
     (cond-> "\\documentclass"
-      opt (str (format "[%s]"(join "," opt)))
+      (seq opt) (str (format "[%s]"(join "," opt)))
       true (str (format "{%s}" (first args))))))
 
 (defcmd :usepckage :normal [data]
@@ -201,8 +201,8 @@
          :usepckage
          data)]}
   (let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
-    (cond-> "\\usepckage"
-      opt (str (format "[%s]"(join "," opt)))
+    (cond-> "\\usepackage"
+      (seq opt)      (str (format "[%s]"(join "," opt)))
       true (str (format "{%s}" (first args))))))
 
 (register-example :usepckage

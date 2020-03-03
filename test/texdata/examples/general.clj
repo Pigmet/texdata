@@ -28,6 +28,6 @@
    test-path
    (demo-string args)))
 
-(view 1)
+
 
 
