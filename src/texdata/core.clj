@@ -193,13 +193,11 @@
   in which case an example is attached to the exception if
   one is available."
   [test id data]
-  (let[m {:input data}
-       ex (example id)
-       m (if ex (assoc m :expected-input ex) m)]
-    `(or ~test
-         (throw
-          (ex-info ~(format "invalid input for %s" id)
-                   ~m)))))
+  `(or ~test
+       (throw
+        (ex-info ~(format "invalid input for %s" id)
+                 {:input ~data
+                  :expected-example (example ~id)}))))
 
 ;; basic math 
 
@@ -272,7 +270,7 @@
  [:align "f(x)" :amp :eq "g(x)"
   :next
   :amp :eq 0]
- 
+
  :align*
  [:align* "f(x)" :amp :eq "g(x)"
   :next
@@ -321,7 +319,7 @@
        (-> v parens-table second)))
 
 (defcmd :paren :normal [[_ k & more :as data]]
-  {:pre[(pre-check-tex
+  {:pre[(pre-check-tex 
          (belong? (keys parens-table) k)
          :paren
          data
@@ -345,10 +343,6 @@
          :opt (s/? (s/map-of #{:opt} (s/coll-of any?)))
          :args any?))
 
-(register-example
- :documentclass
- [:documentclass {:opt ["a4paper" "12pt"]} "article"])
-
 (defcmd :documentclass :normal [data]
   {:pre[(pre-check-tex
          (s/valid? ::documentclass-spec data)
@@ -358,6 +352,11 @@
     (cond-> "\\documentclass"
       (seq opt) (str (format "[%s]"(join "," opt)))
       true (str (format "{%s}" (first args))))))
+
+(register-example
+ :documentclass
+ #{[:documentclass "article"]
+   [:documentclass {:opt "12pt"} "article"]})
 
 (defcmd :usepckage :normal [data]
   {:pre[(pre-check-tex
@@ -448,6 +447,8 @@
 
 (defcmd :minus :normal [[_ & more]]
   (format "- %s" (tex more)))
+
+
 
 
 
