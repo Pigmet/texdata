@@ -98,8 +98,17 @@
 
 (view
  (tex->
-  [:align "f(x)" :amp :eq "g(x)"
-   :next
-   :amp :eq 0]))
+  ["\\Phi(x)"
+   :eq
+   [:frac 1 [:sqrt 2 :pi]]
+   [:int {:from [:minus :infty] :to "x"}
+    "dt" :sp "exp\\{-\\frac{t^2}2 \\}"
+    :eq
+    [:frac 1 2]
+    [:paren :square [1 "+" [:text "erf"] "(x)"]]]
+   ]
+  :math
+  :huge))
+
 
 

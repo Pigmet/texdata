@@ -285,24 +285,24 @@
 (defcmd :next :independent "\\\\")
 
 (defcmd :array :environment
-[[_ pos & args]]
-(format "\\begin{array}{%s} %s \\end{array}"
-(tex pos)
-(tex args)))
+  [[_ pos & args]]
+  (format "\\begin{array}{%s} %s \\end{array}"
+          (tex pos)
+          (tex args)))
 
 (def ^:private parens-table
-{:round ["(" ")"]
-:square ["[" "]"]
-:curly ["\\{" "\\}"]
-:angle ["<" ">"]
-:none ["." "."]})
+  {:round ["(" ")"]
+   :square ["[" "]"]
+   :curly ["\\{" "\\}"]
+   :angle ["<" ">"]
+   :none ["." "."]})
 
 (register-example
-:left
-(into #{} (for [k (keys parens-table)] [:left k]))
-:right
-(into #{} (for [k (keys parens-table)] [:right k]))
-)
+ :left
+ (into #{} (for [k (keys parens-table)] [:left k]))
+ :right
+ (into #{} (for [k (keys parens-table)] [:right k]))
+ )
 
 (defcmd :left :normal [[_ v :as data]]
   {:pre[(pre-check-tex
@@ -319,6 +319,22 @@
          data)]}
   (str "\\right"
        (-> v parens-table second)))
+
+(defcmd :paren :normal [[_ k & more :as data]]
+  {:pre[(pre-check-tex
+         (belong? (keys parens-table) k)
+         :paren
+         data
+         )]}
+  (let [[l r] (get parens-table k)]
+    (format "%s %s %s" l (tex more) r)))
+
+(register-example
+ :paren
+ #{[:paren :curly 1]
+   [:paren :angle 1]
+   [:paren :round 1]
+   [:paren :square 1]})
 
 (defcmd :cases :environment :default)
 
@@ -418,14 +434,22 @@
 
 (defcmd :Vmatrix :environment :default)
 
-
-
 ;; other commands
 
 (defcmd :sp :independent "\\;")
 
+(defcmd :sqrt :normal :default)
+
+(defcmd :sqrt-n :normal
+  [[_ n & more]]
+  (format "\\sqrt[%s]{%s}" (tex n) (tex more)))
+
+(register-example :sqrt-n [:sqrt-n 3 "x"])
+
+(defcmd :minus :normal [[_ & more]]
+  (format "- %s" (tex more)))
+
+
+
 ;; TODO : add more commands 
 
-(tex [:tabular "cc" :amp 1 ])
-
-(tex [:frac 1 :amp])
