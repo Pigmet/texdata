@@ -226,6 +226,33 @@
 
 (register-example :int [:int {:from 0 :to 1} "f(x)" "dx"])
 
+(defcmd :sum :normal [data]
+  {:pre[(pre-check-tex
+         (s/valid? ::int-spec data)
+         :int
+         data)]}
+  (let[{:keys [opt args]} (s/conform ::int-spec data)]
+    (cond-> "\\sum"
+      (seq opt)(decorate-tex opt)
+      (seq args)(str (format " %s" (tex args))))))
+
+(register-example :sum
+                  [:sum {:from ["n" :eq 1] :to 10} "a_{n}"])
+
+(defcmd :prod :normal [data]
+  {:pre[(pre-check-tex
+         (s/valid? ::int-spec data)
+         :int
+         data)]}
+  (let[{:keys [opt args]} (s/conform ::int-spec data)]
+    (cond-> "\\prod"
+      (seq opt)(decorate-tex opt)
+      (seq args)(str (format " %s" (tex args))))))
+
+(register-example
+ :prod
+ [:prod {:from ["n" :eq 1] :to 10} "a_{n}"])
+
 (defcmd :math :normal [[_ & args]]
   (format "\\[ %s \\]" (tex args)))
 
@@ -240,6 +267,17 @@
 
 (defcmd :align* :environment :default)
 
+(register-example
+ :align
+ [:align "f(x)" :amp :eq "g(x)"
+  :next
+  :amp :eq 0]
+ 
+ :align*
+ [:align* "f(x)" :amp :eq "g(x)"
+  :next
+  :amp :eq 0])
+
 (defcmd :amp :independent "&")
 
 (defcmd :eq :independent "=")
@@ -247,24 +285,24 @@
 (defcmd :next :independent "\\\\")
 
 (defcmd :array :environment
-  [[_ pos & args]]
-  (format "\\begin{array}{%s} %s \\end{array}"
-          (tex pos)
-          (tex args)))
+[[_ pos & args]]
+(format "\\begin{array}{%s} %s \\end{array}"
+(tex pos)
+(tex args)))
 
 (def ^:private parens-table
-  {:round ["(" ")"]
-   :square ["[" "]"]
-   :curly ["\\{" "\\}"]
-   :angle ["<" ">"]
-   :none ["." "."]})
+{:round ["(" ")"]
+:square ["[" "]"]
+:curly ["\\{" "\\}"]
+:angle ["<" ">"]
+:none ["." "."]})
 
 (register-example
- :left
- (into #{} (for [k (keys parens-table)] [:left k]))
- :right
- (into #{} (for [k (keys parens-table)] [:right k]))
- )
+:left
+(into #{} (for [k (keys parens-table)] [:left k]))
+:right
+(into #{} (for [k (keys parens-table)] [:right k]))
+)
 
 (defcmd :left :normal [[_ v :as data]]
   {:pre[(pre-check-tex
@@ -281,6 +319,8 @@
          data)]}
   (str "\\right"
        (-> v parens-table second)))
+
+(defcmd :cases :environment :default)
 
 ;; preamble
 
@@ -366,10 +406,23 @@
 
 (defcmd :caption :normal :default)
 
+;;matrix
+
+(defcmd :matrix :environment :default)
+
+(defcmd :pmatrix :environment :default)
+
+(defcmd :bmatrix :environment :default)
+
+(defcmd :vmatrix :environment :default)
+
+(defcmd :Vmatrix :environment :default)
 
 
 
+;; other commands
 
+(defcmd :sp :independent "\\;")
 
 ;; TODO : add more commands 
 
