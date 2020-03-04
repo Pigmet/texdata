@@ -23,6 +23,10 @@
 (defn- register-command-impl [& kvs]
   (register-impl command-repository kvs))
 
+(def ^:private command-types
+  {:args #{:environment :normal}
+   :no-args #{:independent}})
+
 (defn register-command
   ([id type] (register-command id type (name id)))
   ([id type s] (register-command-impl id {:type type :s s})))
@@ -39,8 +43,16 @@
 (s/def ::decorate-spec
   (s/+ (s/cat :k get-decorator :v any?)))
 
+(defn- argument-command?
+  "Returns logical true iff id signies a tex command
+  that takes arguments, e.g., :frac."
+  [id]
+  (->> id get-command :type (belong? (command-types :args))))
+
 (s/def ::command-spec
-  (s/cat :cmd get-command :opt (s/? map?) :args (s/* any?)))
+  (s/cat :cmd argument-command?
+         :opt (s/? map?)
+         :args (s/* any?)))
 
 (s/def ::tex-spec
   (s/or
@@ -64,6 +76,9 @@
 
 (defn tex [& args] (join " " (map data->string args)))
 
+(defn- env-cmd-s [cmd & more]
+  (format "\\begin{%s} %s \\end{%s}" cmd (tex more) cmd))
+
 ;;;;;;;;;;;;;;;;;;;;
 ;; tex threading  ;;
 ;;;;;;;;;;;;;;;;;;;;
@@ -71,7 +86,7 @@
 (defn tex->> [exp & more]
   (reduce
    (fn [acc x]
-     (if (coll? x) (tex (concat x [acc])) (tex [x acc])))
+     (if (coll? x) (tex (concat x [acc])) ( tex [x acc])))
    (tex exp)
    more))
 
@@ -171,10 +186,10 @@
 
 (defn example [id] (get @example-repository id))
 
-;; commands
+;; commands implementation
 
 (defmacro pre-check-tex
-  "Evaluates test and throw ex-info if the result is logical false,
+  "Evaluates test and throws ex-info if the result is logical false,
   in which case an example is attached to the exception if
   one is available."
   [test id data]
@@ -188,6 +203,7 @@
 
 ;; basic math 
 
+;; new decorators for int.
 (register-decorator
  :from tex-sub
  :on tex-sub
@@ -211,10 +227,10 @@
 (register-example :int [:int {:from 0 :to 1} "f(x)" "dx"])
 
 (defcmd :math :normal [[_ & args]]
-(format "\\[ %s \\]" (tex args)))
+  (format "\\[ %s \\]" (tex args)))
 
 (defcmd :frac :normal [[_ x y]]
-(format "\\frac{%s}{%s}" (tex x) (tex y)))
+  (format "\\frac{%s}{%s}" (tex x) (tex y)))
 
 (defcmd :equation :environment :default)
 
@@ -243,7 +259,6 @@
    :angle ["<" ">"]
    :none ["." "."]})
 
-
 (register-example
  :left
  (into #{} (for [k (keys parens-table)] [:left k]))
@@ -262,7 +277,7 @@
 (defcmd :right :normal [[_ v :as data]]
   {:pre[(pre-check-tex
          (belong? (keys parens-table) v)
-         :left
+         :right
          data)]}
   (str "\\right"
        (-> v parens-table second)))
@@ -275,31 +290,31 @@
          :args any?))
 
 (register-example
-:documentclass
-[:documentclass {:opt ["a4paper" "12pt"]} "article"])
+ :documentclass
+ [:documentclass {:opt ["a4paper" "12pt"]} "article"])
 
 (defcmd :documentclass :normal [data]
-{:pre[(pre-check-tex
-       (s/valid? ::documentclass-spec data)
-       :documentclass
-       data)]}
-(let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
-(cond-> "\\documentclass"
-  (seq opt) (str (format "[%s]"(join "," opt)))
-  true (str (format "{%s}" (first args))))))
+  {:pre[(pre-check-tex
+         (s/valid? ::documentclass-spec data)
+         :documentclass
+         data)]}
+  (let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
+    (cond-> "\\documentclass"
+      (seq opt) (str (format "[%s]"(join "," opt)))
+      true (str (format "{%s}" (first args))))))
 
 (defcmd :usepckage :normal [data]
-{:pre[(pre-check-tex
-       (s/valid? ::documentclass-spec data)
-       :usepckage
-       data)]}
-(let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
-(cond-> "\\usepackage"
-  (seq opt)      (str (format "[%s]"(join "," opt)))
-  true (str (format "{%s}" (first args))))))
+  {:pre[(pre-check-tex
+         (s/valid? ::documentclass-spec data)
+         :usepckage
+         data)]}
+  (let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
+    (cond-> "\\usepackage"
+      (seq opt)      (str (format "[%s]"(join "," opt)))
+      true (str (format "{%s}" (first args))))))
 
 (register-example :usepckage
-#{[:usepckage "xcolor"]})
+                  #{[:usepckage "xcolor"]})
 
 (defcmd :document :environment :default)
 
@@ -310,7 +325,7 @@
 (defcmd :Huge :environment :default)
 
 (defcmd :color :normal [[_ c & more]]
-(format "\\color{%s}{%s}" (tex c) (tex more)))
+  (format "\\color{%s}{%s}" (tex c) (tex more)))
 
 (register-example :color [:color "red" 1])
 
@@ -322,4 +337,42 @@
 
 (defcmd :emph :normal :default)
 
+;; table
 
+(defcmd :table :environment
+  [[_ pos & args]]
+  (env-cmd-s "table"
+             (format "[%s]" (tex pos))
+             (tex args)))
+
+(defcmd :tabular :environment
+  [[_ pos & args]]
+  (env-cmd-s "tabular"
+             (format "{%s}" (tex pos))
+             (tex args)))
+
+(register-example
+ :table
+ [:table "h" [:tabular "cc" 1 :amp 2]]
+ :tabular
+ [:table "h" [:tabular "cc" 1 :amp 2]]
+ )
+
+(defcmd :center :environment :default)
+
+(defcmd :flushleft :environment :default)
+
+(defcmd :flushright :environment :default)
+
+(defcmd :caption :normal :default)
+
+
+
+
+
+
+;; TODO : add more commands 
+
+(tex [:tabular "cc" :amp 1 ])
+
+(tex [:frac 1 :amp])

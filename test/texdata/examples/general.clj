@@ -28,28 +28,24 @@
    test-path
    (demo-string args)))
 
-(comment
+(def items
+  {"apple" {:price 100 :calory 200}
+   "banana" {:price 50 :calory 54}
+   "mikan" {:price 34 :calory 6}})
 
-  (def t1
-    (tex->
-     ["x" :amp :eq 1 :next "y" :amp :eq 2]
-     :align*
-     :Huge))
-
-  (def t2
-    (tex-> [[:frac 1 2] [:int {:from 0 :to :infty} "f(x) dx"] ]
-           :math
-           :huge))
-
-  (def t3
-    (tex-> [[:left :curly]
-            [:array "cc"
-             "x" :amp :eq 1 :next
-             "y" :amp :eq 2 ]
-            [:right :none]]
-           :equation
-           :Huge))
-
-  (view t3)
+  (defn items-string [m]
+    (join " " (for [[k {:keys [price calory]}] items]
+                (tex k :amp price :amp calory :next  :hline))))
   
-  )
+(def t5
+  (tex->>
+   (items-string items)
+   [:tabular "|c|c|c|"]
+   [[:caption "table demo"]]
+   :Huge
+   :center
+   [:table "h"]))
+
+(view t5)
+
+
