@@ -177,6 +177,13 @@
                (register-command ~id ~type)
                (defmethod ~(get fn-table type) ~id ~@body)))))
 
+(defn- defcmd-coll-default
+  "Defines multiple commands via :default. Coll is a collection of command keys
+  (e.g. :sup) type is either :normal :environment."
+  [type coll]
+  (doseq [id coll]
+    (eval `(defcmd ~id ~type :default))))
+
 (def ^:private  example-repository (atom{}))
 
 (defn register-example [& kvs]
@@ -382,22 +389,18 @@
 
 ;; formatting text
 
-(defcmd :huge :environment :default)
-
-(defcmd :Huge :environment :default)
+(defcmd-coll-default :environment [:huge :Huge :small :normalsize])
 
 (defcmd :color :normal [[_ c & more]]
   (format "\\color{%s}{%s}" (tex c) (tex more)))
 
 (register-example :color [:color "red" 1])
 
-(defcmd :underline :normal :default)
-
-(defcmd :textbf :normal :default)
-
-(defcmd :textit :normal :default)
-
-(defcmd :emph :normal :default)
+(defcmd-coll-default
+  :normal
+  [:underline :textbf :emph :textit :sup :sub :wildetilde
+   :underbrace :widehat :overrightarrow :overline :overbrace
+   :mathbb :mathcal :mathbf])
 
 ;; table
 
@@ -455,9 +458,9 @@
 
 ;; accent in math mode
 
-(doseq [id  [:tilde :grave :hat :vec :check :breve :acute
-             :dot :var :ddot]]
-  (eval `(defcmd ~id :normal :default)))
+(defcmd-coll-default
+  :normal
+  [:tilde :grave :hat :vec :check :breve :acute  :dot :var :ddot])
 
 (defcmd :prime :normal [[_ & args]]
   (format "%s\\sp{\\prime}" (tex args)))
@@ -469,7 +472,7 @@
 ;; other commands
 
 (defcmd :doll :normal [[_ & args]]
-  (format "$ %s $" (tex args)))
+(format "$ %s $" (tex args)))
 
 (defcmd :text :normal :default)
 

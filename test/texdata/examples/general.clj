@@ -31,5 +31,7 @@
 
 (view
  (tex->
-  [:math [:prime "a"] :sp [:hat "a"] :sp [:tilde "a"]]
+  (tex
+   [:math [:prime "a"] :sp [:hat "a"] :sp [:tilde "a"]]
+   [:math [:overrightarrow "AB"]])
   :huge))
