@@ -4,7 +4,11 @@ A Clojure library designed to ... well, that part is up to you.
 
 ## Usage
 
-FIXME
+This library offers a few functions that convert Clojure data to string recognizable by TeX. The below is a simple example
+
+```clojure
+(tex [:frac 1 2])
+```
 
 ## License
 

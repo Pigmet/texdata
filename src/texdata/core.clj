@@ -470,7 +470,6 @@
 
 (defcmd-coll-default :normal [:ref :label :pageref])
 
-
 ;; other commands
 
 (defcmd :doll :normal [[_ & args]]
