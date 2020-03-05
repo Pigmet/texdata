@@ -202,10 +202,11 @@
 ;; basic math 
 
 ;; new decorators for int.
-(register-decorator
- :from tex-sub
- :on tex-sub
- :to tex-pow)
+
+(def ^:private int-decorators
+  {  :from tex-sub
+   :on tex-sub
+   :to tex-pow})
 
 (s/def ::int-spec
   (s/cat :cmd keyword?
@@ -219,7 +220,7 @@
          data)]}
   (let[{:keys [opt args]} (s/conform ::int-spec data)]
     (cond-> "\\int"
-      (seq opt)(decorate-tex opt)
+      (seq opt)(decorate-tex-impl int-decorators opt)
       (seq args)(str (format " %s" (tex args))))))
 
 (register-example :int [:int {:from 0 :to 1} "f(x)" "dx"])
@@ -451,11 +452,29 @@
 (defcmd :minus :normal [[_ & more]]
   (format "- %s" (tex more)))
 
-(defcmd :lim :normal :default)
+(def ^:private lim-decorators
+  {:as tex-sub})
 
-(tex [:lim :to 1  1])
+(defcmd :to :independent "\\to")
+
+(defn- lim-type-impl-code [id]
+  (let [data (gensym "data")
+        cmd (gensym "cmd")
+        opt (gensym "opt")
+        args (gensym "args")]
+    `(defcmd ~id :normal [~data]
+       (let [{~cmd :cmd ~opt :opt ~args :args} (conform-command ~data)]
+         (cond-> (str "\\" (name ~cmd))
+           (seq ~opt) (decorate-tex-impl lim-decorators ~opt)
+           true (str " " (tex ~args)))))))
+
+(doseq [id [:limsup :liminf :lim :varlimsup :varliminf]]
+  (eval (lim-type-impl-code id)))
 
 
 
-;; TODO : add more commands 
+
+
+
+
 
