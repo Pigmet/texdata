@@ -398,7 +398,9 @@
 
 (defcmd-coll-default
   :normal
-  [:underline :textbf :emph :textit :sup :sub :wildetilde
+  [:underline :textbf :emph :textit
+   :textrm :textmd :textsf
+   :sup :sub :wildetilde
    :underbrace :widehat :overrightarrow :overline :overbrace
    :mathbb :mathcal :mathbf])
 
@@ -445,13 +447,12 @@
 
 ;; accent
 
-(doseq [id [:b :t :u :H :d :r :c :v]]
-  (eval  `(defcmd ~id :normal :default)))
+(defcmd-coll-default :normal [:b :t :u :H :d :r :c :v])
 
 (defn- accent-impl-code [id s]
-(let [args (gensym "args")]
-  `(defcmd ~id :normal [[~'_ & ~args]]
-     (format "\\%s{%s}" ~s (tex ~args)))))
+  (let [args (gensym "args")]
+    `(defcmd ~id :normal [[~'_ & ~args]]
+       (format "\\%s{%s}" ~s (tex ~args)))))
 
 (doseq [[id s] [[:a-tilde "~"] [:a-hat "^"] [:a-dash "'"] [:a-dot "."]]]
   (eval (accent-impl-code id s)))
@@ -465,14 +466,15 @@
 (defcmd :prime :normal [[_ & args]]
   (format "%s\\sp{\\prime}" (tex args)))
 
+;; ref
 
-
+(defcmd-coll-default :normal [:ref :label :pageref])
 
 
 ;; other commands
 
 (defcmd :doll :normal [[_ & args]]
-(format "$ %s $" (tex args)))
+  (format "$ %s $" (tex args)))
 
 (defcmd :text :normal :default)
 
@@ -481,32 +483,32 @@
 (defcmd :sqrt :normal :default)
 
 (defcmd :sqrt-n :normal
-[[_ n & more]]
-(format "\\sqrt[%s]{%s}" (tex n) (tex more)))
+  [[_ n & more]]
+  (format "\\sqrt[%s]{%s}" (tex n) (tex more)))
 
 (register-example :sqrt-n [:sqrt-n 3 "x"])
 
 (defcmd :minus :normal [[_ & more]]
-(format "- %s" (tex more)))
+  (format "- %s" (tex more)))
 
 (def ^:private lim-decorators
-{:as tex-sub})
+  {:as tex-sub})
 
 (defcmd :to :independent "\\to")
 
 (defn- lim-type-impl-code [id]
-(let [data (gensym "data")
-      cmd (gensym "cmd")
-      opt (gensym "opt")
-      args (gensym "args")]
-  `(defcmd ~id :normal [~data]
-     (let [{~cmd :cmd ~opt :opt ~args :args} (conform-command ~data)]
-       (cond-> (str "\\" (name ~cmd))
-         (seq ~opt) (decorate-tex-impl lim-decorators ~opt)
-         true (str " " (tex ~args)))))))
+  (let [data (gensym "data")
+        cmd (gensym "cmd")
+        opt (gensym "opt")
+        args (gensym "args")]
+    `(defcmd ~id :normal [~data]
+       (let [{~cmd :cmd ~opt :opt ~args :args} (conform-command ~data)]
+         (cond-> (str "\\" (name ~cmd))
+           (seq ~opt) (decorate-tex-impl lim-decorators ~opt)
+           true (str " " (tex ~args)))))))
 
 (doseq [id [:limsup :liminf :lim :varlimsup :varliminf]]
-(eval (lim-type-impl-code id)))
+  (eval (lim-type-impl-code id)))
 
 
 

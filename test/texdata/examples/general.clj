@@ -32,6 +32,8 @@
 (view
  (tex->
   (tex
-   [:math [:prime "a"] :sp [:hat "a"] :sp [:tilde "a"]]
-   [:math [:overrightarrow "AB"]])
-  :huge))
+   [:equation "x" :eq 1 [:label "one"]]
+   "The equation"
+   [:paren :round[:pageref "one"]]
+   "is called my equation.")
+  :huge ))
