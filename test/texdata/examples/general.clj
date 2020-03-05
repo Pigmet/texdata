@@ -29,11 +29,15 @@
    test-path
    (demo-string args)))
 
-(view
- (tex->
-  (tex
-   [:equation "x" :eq 1 [:label "one"]]
-   "The equation"
-   [:paren :round[:pageref "one"]]
-   "is called my equation.")
-  :huge ))
+(comment
+
+  (view
+   (tex->
+    (tex
+     [:equation "x" :eq 1 [:label "one"]]
+     "The equation"
+     [:paren :round[:pageref "one"]]
+     "is called my equation.")
+    :huge ))
+  
+  )
