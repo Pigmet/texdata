@@ -31,18 +31,5 @@
 
 (view
  (tex->
-  [[:frac :partial [:partial "\\lambda_1"]]
-   [:sum {:from ["r" :eq 1] :to :infty}
-    :log
-    [:paren :round
-     [1 "-" :exp
-      [:paren :round "-r" [:lambda :sub 1] "-" [:mu :sub 1]]]]]
-   :eq
-   [:sum {:from ["r" :eq 1] :to :infty}
-    [:frac "r"
-     [:exp [:paren :curly "r" [:lambda :sub 1] "+" [:mu :sub 1]] "-1"]]]]
-  :math
+  [:math [:prime "a"] :sp [:hat "a"] :sp [:tilde "a"]]
   :huge))
-
-
-
