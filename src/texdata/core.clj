@@ -435,6 +435,9 @@
 
 ;; other commands
 
+(defcmd :doll :normal [[_ & args]]
+  (format "$ %s $" (tex args)))
+
 (defcmd :sp :independent "\\;")
 
 (defcmd :sqrt :normal :default)
@@ -448,7 +451,9 @@
 (defcmd :minus :normal [[_ & more]]
   (format "- %s" (tex more)))
 
+(defcmd :lim :normal :default)
 
+(tex [:lim :to 1  1])
 
 
 
