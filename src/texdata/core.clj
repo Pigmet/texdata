@@ -120,7 +120,7 @@
 (defn- decorate-tex [data m]
   (decorate-tex-impl data @decorator-reposity m))
 
-(register-decorator :pow tex-pow :sub tex-sub)
+(register-decorator :super tex-pow :sub tex-sub)
 
 (defmethod data->string :decorated [[v & more]]
   (let [m (apply hash-map more)]
@@ -493,8 +493,6 @@
 (def ^:private lim-decorators
   {:as tex-sub})
 
-(defcmd :to :independent "\\to")
-
 (defn- lim-type-impl-code [id]
   (let [data (gensym "data")
         cmd (gensym "cmd")
@@ -508,7 +506,6 @@
 
 (doseq [id [:limsup :liminf :lim :varlimsup :varliminf]]
   (eval (lim-type-impl-code id)))
-
 
 
 

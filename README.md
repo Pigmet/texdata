@@ -4,7 +4,9 @@ A Clojure library designed to produce Tex documents.
 
 ## Usage
 
-This library offers a few functions that convert Clojure data to string recognizable by TeX. tex is such a function and the below is a simple examples:
+### simple examples
+
+This library offers a few functions that convert Clojure data to string recognizable by TeX. tex is such a function and the below are simple examples:
 
 ```clojure
 (tex 1)
@@ -22,15 +24,171 @@ This library offers a few functions that convert Clojure data to string recogniz
 (tex [:equation [:frac 1 2]])
 ;; => "\\begin{equation} \\frac{1}{2} \\end{equation}"
 ```
-When it is given string or number, it justs returns the string representation of the argument. When it is given a keyword, it converts it a TeX symbol.
+### How tex treats data
 
-When it is given a vector beginning with a keyword that specifies a Tex command (like :frac in the last example), it returns a string corresponding to that TeX command. More precisely, data like
+#### string and number
+
+When it is given string or number, it just returns the string representation of the argument. In other words, tex is nothing else but clojure.core/str in this case.
+
+### keyword 
+
+tex treats a standalone keyword signifying a TeX symbol. All keywords are converted to the corresponding TeX symbol when passed to tex, tex-> or tex->>.
+
+```clojure
+  (tex :sin)
+  ;; => "\\sin"
+
+  (tex :log)
+  ;; => "\\log"
+```
+
+As you see above, tex converts a keyword k to string by just adding the escape character to the result of (name k).
+
+There are some exceptions to this rule:
+
+```clojure
+  (tex :amp)
+  ;; => "&"
+  (tex :next)
+  ;; => "\\\\"
+```
+
+### command 
+
+When tex is given a vector beginning with a keyword that specifies a Tex command (like :frac in the last example), it returns a string corresponding to that TeX command. More precisely, a vector like
 
 [keyword arg1 arg2 ...]
 
- are treated in a similar way to the S-expression in Lisp:
+ is treated in a similar way to the S-expression in Lisp:
 
 (function arg1 arg2 ...)
+
+### subscripts and superscripts 
+
+In TeX, superscripts and subscripts are written using the symbols ^ and _. To get the same result, use :super and :sub keywords respectively:
+
+```clojure
+(tex ["a" :super 2 :sub "n"])
+  ;; => "a_{n}^{2}" 
+```
+
+### optional attributes
+
+You can specify optional attributes in some commands. That is done by inserting a map that contains the desired data. :int is one of those commands that can takes such an optional map:
+
+```clojure
+(tex [:int "f(x)dx"])
+;; => "\\int f(x)dx"
+
+(tex [:int {:from 0 :to 1} "f(x)dx"])
+;; => "\\int_{0}^{1} f(x)dx"
+
+(tex [:int {:on "A"} "f(x)dx" ])
+;; => "\\int_{A} f(x)dx"
+```
+
+### threading functions
+
+tex-> and tex->> are functions somewhat similar to clojure.core/-> and
+clojure.core/->> respectively. They are handy when composing commands. For example, 
+
+```clojure
+(tex-> "x" :equation :huge)
+```
+
+is same as
+
+```clojure
+(tex [:huge [:equation "x"]])
+```
+
+producing the result:
+
+```clojure
+"\\begin{huge} \\begin{equation} x \\end{equation} \\end{huge}"
+```
+
+tex->, like clojure.core/->, inserts the previous result at the second place of the next form and repeats the process. 
+
+tex->> works likewise, but the previous result is inserted at the last of the next form, like clojure.core/->>. This is necessary when working with commands like :color, which takes a string specifying the color of the subsequent part as the first argument: 
+
+```clojure
+(tex [:color "red" [:equation "x = 1"]])
+```
+To obtain the same result with tex->>, we write:
+
+```clojure
+(tex->> "x = 1" :equation [:color "red"])
+;; => "\\color{red}{\\begin{equation} x = 1 \\end{equation}}"
+```
+
+### querying examples
+
+example is a function to obtain expected input examples for each command. Its grammar is as follows.
+
+```clojure
+(example :int)
+;; => [:int {:from 0, :to 1} "f(x)" "dx"]
+```
+### defining new commands
+
+There may be tiemes when you want to add a new command. defcmd is a macro designed for that purpose. Its grammar is as folows. 
+
+```clojure
+(defcmd command-keyword command-type &body)
+```
+
+Here, command-keyword is a keyword signifying the command to be defined. command-type is one of 
+
+* :environment
+* :normal
+* :independent 
+
+:environment commands are such ones as :equation, namely, they are commands sandwiched between \begin{...} and \end{...}. :normal commands are other commands that takes arguments (e.g., :frac, :color). :independent commands are specified by standalone keywords that are converted to TeX symbols. 
+
+defcmd provides default implemenation for :environment and :normal commands. Let's supporose you want to register a new environment command :hoge with the desired result:
+
+```clojure
+(tex [:hoge "hello"])
+;; => "\\begin{hoge} hello \\end{hoge}"
+```
+
+Then, just evaluating 
+
+```clojure
+(defcmd :hoge :environment :default)
+```
+
+will do.
+
+Other times, you may need to have more specific structure. Let's suppose that your new command :my-color takes a string of color as the first argument, followed by any number of arguments:
+
+```clojure
+(tex [:my-color "red" "hello"])
+;; => "\\mycolor{red}{hello}"
+```
+
+Regitering :my-color requires giving necesary details in defcmd:
+
+```clojure
+(defcmd :my-color :normal [[_ c & args]]
+  (format "\\mycolor{%s}{%s}" c (tex args)))
+```
+
+when not using the :default keyword as explained above, the @body part of the defcmd is like that of defn. Let me note that its parameter is supposed to be a vector (not variadic argument list ), whose first item is the command keyword (:my-color in the above example).
+
+## full example
+
+Here is a code that produces a complete TeX document:
+
+
+
+
+
+
+```clojure
+```
+
 
 
 ## License
