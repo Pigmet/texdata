@@ -32,7 +32,7 @@ When it is given string or number, it just returns the string representation of 
 
 ### keyword 
 
-tex treats a standalone keyword signifying a TeX symbol. All keywords are converted to the corresponding TeX symbol when passed to tex, tex-> or tex->>.
+tex treats a standalone keyword signifying a TeX symbol. Most keywords are converted to the corresponding TeX symbol when passed to tex, tex-> or tex->>.
 
 ```clojure
   (tex :sin)
