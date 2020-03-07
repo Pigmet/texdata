@@ -66,7 +66,9 @@
   
   test-path
   ;; => 
-  (compile-and-view "test/texdata/examples/out/test.tex" dirac-delta )
+  (compile-and-view
+   "test/texdata/examples/out/test.tex"
+   dirac-delta )
 
   
 

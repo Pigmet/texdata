@@ -143,7 +143,7 @@ To obtain the same result with tex->>, we write:
 
 ### querying examples
 
-example is a function to obtain expected input examples for each command. Its grammar is as follows.
+example is a function to obtain expected input examples for each command.
 
 ```clojure
 (example :int)
@@ -151,7 +151,7 @@ example is a function to obtain expected input examples for each command. Its gr
 ```
 ### defining new commands
 
-There may be tiemes when you want to add a new command. defcmd is a macro designed for that purpose. Its grammar is as folows. 
+There may be tiemes when you want to add a new command. defcmd is a macro designed for that purpose. Its grammar is as follows:
 
 ```clojure
 (defcmd command-keyword command-type &body)
@@ -233,11 +233,11 @@ Here is a code that produces a complete TeX document:
 ```
 
 compile-and-view is useful when you want to see the result quickly, It takes
-path to a TeX file and a string, writes the string therein and TeX compiles the file and opens the resulting PDF in the system's default viewer. Let's create a file
+path to a TeX file and a string, writes the string therein and TeX compiles the file and opens the resulting PDF in the system's default viewer. Let's create a file:
 
 test/texdata/examples/out/test.tex
 
-to see the result of the above example:
+To see the result of the above example, evaluate:
 
 ```clojure
   (compile-and-view "test/texdata/examples/out/test.tex" dirac-delta )
