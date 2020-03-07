@@ -296,6 +296,9 @@
           (tex pos)
           (tex args)))
 
+(register-example :array
+                  [:array "cc" 1 :amp 2 :next 3 :amp 4])
+
 (def ^:private parens-table
   {:round ["(" ")"]
    :square ["[" "]"]
@@ -366,7 +369,7 @@
  #{[:documentclass "article"]
    [:documentclass {:opt "12pt"} "article"]})
 
-(defcmd :usepckage :normal [data]
+(defcmd :usepackage :normal [data]
   {:pre[(pre-check-tex
          (s/valid? ::documentclass-spec data)
          :usepckage
@@ -376,8 +379,8 @@
       (seq opt)      (str (format "[%s]"(join "," opt)))
       true (str (format "{%s}" (first args))))))
 
-(register-example :usepckage
-                  #{[:usepckage "xcolor"]})
+(register-example :usepackage
+                  #{[:usepackage "xcolor"]})
 
 (defcmd :document :environment :default)
 
@@ -472,7 +475,7 @@
 
 ;; other commands
 
-(defcmd :doll :normal [[_ & args]]
+(defcmd :dol :normal [[_ & args]]
   (format "$ %s $" (tex args)))
 
 (defcmd :text :normal :default)

@@ -72,6 +72,25 @@ In TeX, superscripts and subscripts are written using the symbols ^ and _. To ge
   ;; => "a_{n}^{2}" 
 ```
 
+### mathematical expressions
+To put a mathematical expression in inline mode, use :dol like:
+
+```clojure
+  (tex [:dol ["x" :super 2] "+" ["y" :super 2] :eq ["z" :super 2]])
+  ;; => "$ x^{2} + y^{2} = z^{2} $"  
+```
+
+To effect the display mode, use :math for unnumbered expressions and :equation
+for numbered expressions:
+
+```clojure
+(tex [:math "E" :eq "mc"])
+;; => "\\[ E = mc \\]"
+
+(tex [:equation "E" :eq "mc"])
+;; => "\\begin{equation} E = mc \\end{equation}"
+```
+
 ### optional attributes
 
 You can specify optional attributes in some commands. That is done by inserting a map that contains the desired data. :int is one of those commands that can takes such an optional map:
@@ -174,21 +193,57 @@ Regitering :my-color requires giving necesary details in defcmd:
 (defcmd :my-color :normal [[_ c & args]]
   (format "\\mycolor{%s}{%s}" c (tex args)))
 ```
-
-when not using the :default keyword as explained above, the @body part of the defcmd is like that of defn. Let me note that its parameter is supposed to be a vector (not variadic argument list ), whose first item is the command keyword (:my-color in the above example).
+When not using the :default keyword as explained above, the @body part of the defcmd is like that of defn. Let me note that its parameter is supposed to be a vector (not variadic argument list ), whose first item is the command keyword (:my-color in the above example).
 
 ## full example
 
 Here is a code that produces a complete TeX document:
 
-
-
-
-
-
 ```clojure
+
+  (def dirac-delta
+    (let [p1 (tex :delta "(x)"
+                  :eq 0
+                  :sp [:text "if" [:dol "x" :neq 0]])
+          
+          p2 (tex [:int {:from ["-" :infty] :to :infty}
+                   :delta "(x)dx"]
+                  :eq 1)
+          
+          p3 (tex [:int {:from ["-" :infty] :to :infty}
+                   :delta "(x)"
+                   "f(x)dx"]
+                  :eq 0)]
+
+      (tex
+       [:documentclass "article"]
+       [:usepackage "amsmath"]
+       [:usepackage "amssymb"]
+       [:usepackage {:opt ["left = 20mm" "right = 20mm"] } "geometry"]
+       [:document
+        [:huge
+         ["The Dirac delta function" [:dol :delta "(x)"] "satisfies"
+          [:math
+           [:left :curly]
+           [:array "c" p1 ",":next p2 "." ]
+           [:right :none]]
+          "And for any function" [:dol "f(x),"] "we have the equality"
+          [:math p3 "."]]]])))
+
 ```
 
+compile-and-view is useful when you want to see the result quickly, It takes
+path to a TeX file and a string, writes the string therein and TeX compiles the file and opens the resulting PDF in the system's default viewer. Let's create a file
+
+test/texdata/examples/out/test.tex
+
+to see the result of the above example:
+
+```clojure
+  (compile-and-view "test/texdata/examples/out/test.tex" dirac-delta )
+```
+
+|[dirac](test/texdata/examples/out/test.png "test")
 
 
 ## License
