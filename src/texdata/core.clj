@@ -221,13 +221,7 @@
                   (cond-> {:input data}
                     ex (assoc :expected-example ex)))))))
 
-
 ;; basic math 
-
-(def ^:private int-decorators
-  {:from tex-sub
-   :on tex-sub
-   :to tex-pow})
 
 (s/def ::int-spec
   (s/cat :cmd keyword?
