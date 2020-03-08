@@ -387,8 +387,21 @@
 (defcmd :author :normal [[_ & args]]
   (join " \\and " (map tex args) ))
 
-(doseq [id [:part :chapter :section :subsection :subsubsection :date]]
-  (eval `(defcmd ~id :normal :default)))
+(defcmd-coll-default :normal
+  [:part :chapter :section :subsection :subsubsection :date])
+
+(defcmd :newtheorem :normal [[cmd x y]]
+  (format "\\%s{%s}{%s}" (name cmd) (tex x) (tex y)))
+
+(defcmd :begin :normal [[_ tag & more]]
+  (format "\\begin{%s} %s \\end{%s}" (tex tag) (tex more) (tex tag)))
+
+(register-example :begin
+                  [:begin "Theorem" 1 2])
+
+(register-example
+ :newtheorem
+ [:newtheorem "theorem" "theorem"])
 
 ;; formatting text
 
@@ -428,25 +441,15 @@
  [:table "h" [:tabular "cc" 1 :amp 2]]
  )
 
-(defcmd :center :environment :default)
-
-(defcmd :flushleft :environment :default)
-
-(defcmd :flushright :environment :default)
+(defcmd-coll-default :environment
+  [:center :flushleft :flushright])
 
 (defcmd :caption :normal :default)
 
 ;;matrix
 
-(defcmd :matrix :environment :default)
-
-(defcmd :pmatrix :environment :default)
-
-(defcmd :bmatrix :environment :default)
-
-(defcmd :vmatrix :environment :default)
-
-(defcmd :Vmatrix :environment :default)
+(defcmd-coll-default :environment
+  [:matrix :pmatrix :vmatrix :bmatrix :Vmatrix])
 
 ;; accent
 
@@ -475,7 +478,8 @@
 
 ;; itemize
 
-(defcmd :itemize :environment :default)
+(defcmd-coll-default :environment
+  [:itemize :enumerate :description])
 
 (s/def ::item-spec (s/cat :cmd keyword?
                           :opt (s/? (s/map-of #{:name} any?))
@@ -494,11 +498,20 @@
 (register-example
  :item  #{[:item "Newton"]
           [:item {:name [:dol "F=ma"]} "Newton"]}
+ 
  :itemize   [:itemize
              [:item {:name [:dol "E=mc"]} "Einstein"]
-             [:item {:name [:dol "F=ma"]} "Newton"]])
+             [:item {:name [:dol "F=ma"]} "Newton"]]
 
+ :enumerate
+ [:enumerate
+  [:item {:name [:dol "E=mc"]} "Einstein"]
+  [:item {:name [:dol "F=ma"]} "Newton"]]
 
+ :description
+ [:itemize
+  [:item {:name [:dol "E=mc"]} "Einstein"]
+  [:item {:name [:dol "F=ma"]} "Newton"]] )
 
 
 ;; other commands

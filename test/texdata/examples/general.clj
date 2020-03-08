@@ -29,8 +29,15 @@
    test-path
    (demo-string args)))
 
-(view
- (tex->
+(let [s
+      (tex [:documentclass "article"]
+           [:usepackage "amsmath"]
+           [:newtheorem "theorem" "Theorem"]
+           [:document
+            "Here goes my theorem."
+            [:begin "theorem"
+             [:math "E=mc"]]])]
+  (compile-and-view test-path s))
 
 (comment
   
