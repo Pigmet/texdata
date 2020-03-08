@@ -1,7 +1,6 @@
 (ns texdata.convert
   (:import 
-   (java.io IOException File)
-   (java.awt.image BufferedImage)
+   (java.io File)
    (javax.imageio ImageIO)
    (org.apache.pdfbox.rendering PDFRenderer ImageType)
    (org.apache.pdfbox.pdmodel PDDocument)))
@@ -26,6 +25,3 @@
         im (new-buffered-image renderer 0)]
     (write-buffered-image im out-path type)))
 
-(pdf->image
- "/Users/naka/Documents/work/clojure/lib/texdata/test/texdata/examples/out/test.pdf"
- "/Users/naka/Documents/work/clojure/lib/texdata/test/texdata/examples/out/test.png")

@@ -1,5 +1,6 @@
 (ns texdata.example.general
   (:require [texdata.core :refer [tex tex-> tex->> compile-and-view]]
+            [texdata.convert :refer [pdf->image]]
             [clojure.string :refer [join]]))
 
 (def standard-packages
@@ -48,17 +49,21 @@
      [:usepackage "amssymb"]
      [:usepackage {:opt ["left = 20mm" "right = 20mm"] } "geometry"]
      [:document
-      [:huge
-       ["The Dirac delta function" [:dol :delta "(x)"] "satisfies"
-        [:math
-         [:left :curly]
-         [:array "c" p1 ",":next p2 "." ]
-         [:right :none]]
-        "And for any function" [:dol "f(x),"] "we have the equality"
-        [:math p3 "."]]]])))
+      ["The Dirac delta function" [:dol :delta "(x)"] "satisfies"
+       [:math
+        [:left :curly]
+        [:array "c" p1 ",":next p2 "." ]
+        [:right :none]]
+       "And for any function" [:dol "f(x),"] "we have the equality"
+       [:math p3 "."]]])))
 
 (compile-and-view
  "test/texdata/examples/out/test.tex"
  dirac-delta)
- 
+
+(pdf->image
+ "/Users/naka/Documents/work/clojure/lib/texdata/test/texdata/examples/out/test.pdf"
+ "/Users/naka/Documents/work/clojure/lib/texdata/test/texdata/examples/out/test.png")y
+
+
 
