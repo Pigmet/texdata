@@ -47,7 +47,7 @@
     {:path (.getAbsolutePath f)
      :dir (.getParent f)}))
 
-(defn compile-tex
+(defn compile-tex*
   "Takes path to a tex file. Compiles it and produces pdf in the same directory.
   Returns the path to the resulting pdf."
   [path]
@@ -60,15 +60,15 @@
       (throw (Exception.
               (format "tex compile error:\n %s" out))))))
 
-(defn update-compile
+(defn update-compile*
   "Updates f by writing s and tex compiles it.
   Returns the path to the resulting PDF if the compilation was successful."
   [f s]
   (spit f s)
-  (compile-tex f))
+  (compile-tex* f))
 
-(defn compile-and-view [f s]
-  (let [pdf (update-compile f s)]
+(defn compile-and-view* [f s]
+  (let [pdf (update-compile* f s)]
     (open-file pdf)))
 
 
