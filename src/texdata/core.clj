@@ -599,22 +599,37 @@
 (defcmd :minus :normal [[_ & more]]
   (format "- %s" (tex more)))
 
-(def ^:private lim-decorators
-  {:as tex-sub})
+(s/def ::lim-spec
+  (s/cat :cmd keyword?
+         :opt (s/? (s/map-of #{:as} any?))
+         :args (s/* any?)))
 
-(defn- lim-type-impl-code [id]
-  (let [data (gensym "data")
-        cmd (gensym "cmd")
-        opt (gensym "opt")
-        args (gensym "args")]
-    `(defcmd ~id :normal [~data]
-       (let [{~cmd :cmd ~opt :opt ~args :args} (conform-command ~data)]
-         (cond-> (str "\\" (name ~cmd))
-           (seq ~opt) (decorate-tex-impl lim-decorators ~opt)
-           true (str " " (tex ~args)))))))
+(defn- lim-type-impl [data]
+  {:pre[(pre-check-tex
+         (s/valid? ::lim-spec data)
+         (first data)
+         data)]}
+  (let [{{as :as} :opt cmd :cmd args :args} (s/conform ::lim-spec data)]
+    (cond-> (format "\\%s" (name cmd))
+      as (str (format "_{%s}" (tex as)))
+      args (str (tex args)))))
 
-(doseq [id [:limsup :liminf :lim :varlimsup :varliminf]]
-  (eval (lim-type-impl-code id)))
+(def ^:private  lim-type-cmds [:limsup :liminf :lim :varlimsup :varliminf])
+
+(defn- lim-type-register-coll [coll]
+  (eval `(do
+           ~@(map
+              (fn [id]
+                (let [data (gensym "data")]
+                  `(defcmd ~id :normal [~data] (lim-type-impl ~data) ) ))
+              coll))))
+
+(lim-type-register-coll lim-type-cmds)
+
+(doseq [id lim-type-cmds]
+  (register-example id [id {:as ["x" :to 1]} "f(x)"]))
+
+
 
 
 
