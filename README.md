@@ -4,7 +4,7 @@ A Clojure library designed to produce Tex documents.
 
 ## Usage
 
-### quick start
+### install
 Add this to the dependencies:
 
 ```clojure
