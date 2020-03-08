@@ -6,30 +6,26 @@
    (org.apache.pdfbox.rendering PDFRenderer ImageType)
    (org.apache.pdfbox.pdmodel PDDocument)))
 
-(def sample-file "test/texdata/examples/out/test.pdf")
-
-(def out-path "test/texdata/examples/out/test.png")
-
 (defn- new-doc [path]
-(PDDocument/load (new File path)))
+  (PDDocument/load (new File path)))
 
 (defn- new-renderer [doc] (new PDFRenderer doc))
 
 (defn- new-buffered-image [r page]
 (.renderImageWithDPI r page 300 ImageType/RGB))
 
-(defn- write-buffered-image [image path]
+(defn- write-buffered-image [image path type-s]
   (ImageIO/write
    image
-   "png"
+   type-s
    (new File path)))
 
-(comment
+(defn pdf->image [from-path out-path &{:keys [type] :or {type "png"}}]
+  (let [doc (new-doc from-path)
+        renderer (new-renderer doc)
+        im (new-buffered-image renderer 0)]
+    (write-buffered-image im out-path type)))
 
-  (def result-bim
-    (-> sample-file new-doc new-renderer (new-buffered-image 0)))
-
-  (write-buffered-image result-bim out-path)
-
-
-  )
+(pdf->image
+ "/Users/naka/Documents/work/clojure/lib/texdata/test/texdata/examples/out/test.pdf"
+ "/Users/naka/Documents/work/clojure/lib/texdata/test/texdata/examples/out/test.png")

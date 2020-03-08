@@ -265,7 +265,6 @@ To see the result of the above example, evaluate:
 
 |[dirac](test/texdata/examples/out/test.png "test")
 
-
 ## License
 
 Copyright © 2020 FIXME

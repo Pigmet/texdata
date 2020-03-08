@@ -1,5 +1,5 @@
 (ns texdata.example.general
-  (:require [texdata.core :refer :all]
+  (:require [texdata.core :refer [tex tex-> tex->> compile-and-view]]
             [clojure.string :refer [join]]))
 
 (def standard-packages
