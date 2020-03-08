@@ -56,6 +56,7 @@
 
 (s/def ::tex-spec
   (s/or
+   :nil nil?
    :literal (some-fn string? number?)
    :independent keyword?
    :decorated (s/cat :v any? :decorate ::decorate-spec)
@@ -98,6 +99,8 @@
    more))
 
 ;; data->string 
+
+(defmethod data->string :nil [_] "")
 
 (defmethod data->string :literal[x] (str x))
 
@@ -396,7 +399,9 @@
          :tag string?
          :name string?))
 
-(defcmd :newtheorem :normal [data]
+;; FIXME: the :following option does not seem to work. why?
+
+(defn- newtheorem-impl [data]
   {:pre [(pre-check-tex
           (s/valid? ::newtheorem-spec data)
           :newtheorem
@@ -409,12 +414,20 @@
       following (str head (format "[%s]{%s}" following n))
       :else (str head (format "{%s}" n)))))
 
-(tex [:newtheorem {:following "theorem"} "lemma" "Lemma"])
+(defcmd :newtheorem :normal [data] (newtheorem-impl data))
+
+(defcmd :newtheorem* :normal [data] (newtheorem-impl data) )
 
 (register-example :newtheorem
                   #{[:newtheorem "theorem" "Theorem"]
                     [:newtheorem {:in "section"} "theorem" "Theorem" ]
                     [:newtheorem {:following "theorem"} "lemma" "Lemma"]
+                    })
+
+(register-example :newtheorem*
+                  #{[:newtheorem* "theorem" "Theorem"]
+                    [:newtheorem* {:in "section"} "theorem" "Theorem" ]
+                    [:newtheorem* {:following "theorem"} "lemma" "Lemma"]
                     })
 
 (s/def ::begin-spec

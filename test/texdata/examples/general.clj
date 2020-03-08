@@ -12,46 +12,33 @@
    :enumerate []
    :geometry ["left = 20mm" "right = 20mm"]
    :graphicx []
-   :mathtools[]
-   :inputenc ["itf8"]})
+   :mathtools[]})
 
 (def test-path "test/texdata/examples/out/test.tex")
 
-(defn- demo-string [coll]
-  (tex [:documentclass "article"]
-       (reduce-kv
-        (fn [acc k v]
-          (str acc (tex [:usepackage {:opt v} (name k)])))
-        ""
-        standard-packages)
-       [:document (tex coll)]))
+(defn- view-string
+  [&{:keys [packages other size class body]
+     :or {packages standard-packages
+          size :normalsize
+          class "article"}}]
+  (tex [:documentclass class]
+       (tex (reduce-kv
+             (fn [acc k v]
+               (tex acc [:usepackage {:opt v} (name k) ]))
+             ""
+             packages))
+       (tex other)
+       [:document [size body]]))
 
-(defn view [& args]
-  (compile-and-view
-   test-path
-   (demo-string args)))
+(compile-and-view
+ test-path
+ (view-string  :size :huge
+               :body (tex [:math "A"])))
 
-(let [s
-      (tex [:documentclass "article"]
-           [:usepackage "amsmath"]
-           [:newtheorem {:in "section"} "theorem" "Theorem"]
-           [:newtheorem {:following "theorem"} "lemma" "Lemma"]
-           [:document
-            (tex->
-             (tex
-              [:section "intro"]
-              "Here is my theorem"
-              [:begin "theorem" [:math "E=1"]]
-              [:begin "lemma" [:math "m=1"]]
-              [:begin "lemma" [:math "c=1"]]
-              [:section "new topic"]
-              [:begin "theorem" [:math "x"]])
-             :huge)])]
-  (compile-and-view test-path s))
 
 
 (comment
-  
+
 
   (def dirac-delta
     (let [p1 (tex :delta "(x)"
@@ -82,14 +69,14 @@
           "And for any function" [:dol "f(x),"] "we have the equality"
           [:math p3 "."]]]])))
 
-  
+
   test-path
   ;; => 
   (compile-and-view
    "test/texdata/examples/out/test.tex"
    dirac-delta )
 
-  
+
 
 
   )
