@@ -231,53 +231,54 @@
 
 (s/def ::int-spec
   (s/cat :cmd keyword?
-         :opt (s/? (s/map-of #{:from :on :to} any?))
-         :args (s/* any?)))
+         :opt (s/? (s/keys :opt-un [::from ::on ::to]))
+         :args (s/* (complement map?))))
 
-(defcmd :int :normal [data]
-  {:pre[(pre-check-tex
-         (s/valid? ::int-spec data)
-         :int
-         data)]}
-  (let[{:keys [opt args]} (s/conform ::int-spec data)]
-    (cond-> "\\int"
-      (seq opt)(decorate-tex-impl int-decorators opt)
-      (seq args)(str (format " %s" (tex args))))))
+(defn- normal-command-impl-coll
+  "Useful when registering commands that share similar implementation.
+  Example:
+  (normal-command-impl-coll `int-type-impl [:int :sum :prod])"
+  [impl-fn coll]
+  (eval `(do
+           ~@(map (fn [id]
+                    (let [data (gensym "data")]
+                      `(defcmd ~id :normal [~data] (~impl-fn ~data))))
+                  coll))))
 
-(register-example :int [:int {:from 0 :to 1} "f(x)" "dx"])
+(defn- int-type-impl [data]
+  {:pre [(pre-check-tex
+          (s/valid? ::int-spec data)
+          (first data)
+          data)]}
+  (let [{{:keys [from on to]} :opt cmd :cmd  args :args}
+        (s/conform ::int-spec data)
+        from* (or from on)]
+    (cond-> (format "\\%s" (name cmd))
+      from* (str (format "_{%s}" (tex from*)))
+      to (str (format "^{%s}" (tex to)))
+      args (str (tex args)))))
 
-(defcmd :sum :normal [data]
-  {:pre[(pre-check-tex
-         (s/valid? ::int-spec data)
-         :int
-         data)]}
-  (let[{:keys [opt args]} (s/conform ::int-spec data)]
-    (cond-> "\\sum"
-      (seq opt)(decorate-tex opt)
-      (seq args)(str (format " %s" (tex args))))))
+(def ^:private int-type-cmds [:int :sum :prod])
 
-(register-example :sum
-                  [:sum {:from ["n" :eq 1] :to 10} "a_{n}"])
-
-(defcmd :prod :normal [data]
-  {:pre[(pre-check-tex
-         (s/valid? ::int-spec data)
-         :int
-         data)]}
-  (let[{:keys [opt args]} (s/conform ::int-spec data)]
-    (cond-> "\\prod"
-      (seq opt)(decorate-tex opt)
-      (seq args)(str (format " %s" (tex args))))))
+(normal-command-impl-coll `int-type-impl int-type-cmds)
 
 (register-example
- :prod
- [:prod {:from ["n" :eq 1] :to 10} "a_{n}"])
+ :int
+ #{[:int "f(x)dx"]
+   [:int {:from 1 :to 2} "f(x)dx"]
+   [:int {:on "A"} "f(x)dx"]})
+
+(doseq [id [:sum :prod]]
+  (register-example
+   id
+   #{[id "a_n"]
+     [id {:from 1 :to 10} "a_n"]}))
 
 (defcmd :math :normal [[_ & args]]
   (format "\\[ %s \\]" (tex args)))
 
 (defcmd :frac :normal [[_ x y]]
-  (format "\\frac{%s}{%s}" (tex x) (tex y)))
+(format "\\frac{%s}{%s}" (tex x) (tex y)))
 
 (defcmd :equation :environment :default)
 
@@ -288,15 +289,15 @@
 (defcmd :align* :environment :default)
 
 (register-example
- :align
- [:align "f(x)" :amp :eq "g(x)"
-  :next
-  :amp :eq 0]
+:align
+[:align "f(x)" :amp :eq "g(x)"
+ :next
+ :amp :eq 0]
 
- :align*
- [:align* "f(x)" :amp :eq "g(x)"
-  :next
-  :amp :eq 0])
+:align*
+[:align* "f(x)" :amp :eq "g(x)"
+ :next
+ :amp :eq 0])
 
 (defcmd :amp :independent "&")
 
@@ -305,89 +306,89 @@
 (defcmd :next :independent "\\\\")
 
 (defcmd :array :environment
-  [[_ pos & args]]
-  (format "\\begin{array}{%s} %s \\end{array}"
-          (tex pos)
-          (tex args)))
+[[_ pos & args]]
+(format "\\begin{array}{%s} %s \\end{array}"
+        (tex pos)
+        (tex args)))
 
 (register-example :array
-                  [:array "cc" 1 :amp 2 :next 3 :amp 4])
+[:array "cc" 1 :amp 2 :next 3 :amp 4])
 
 (def ^:private parens-table
-  {:round ["(" ")"]
-   :square ["[" "]"]
-   :curly ["\\{" "\\}"]
-   :angle ["<" ">"]
-   :none ["." "."]})
+{:round ["(" ")"]
+ :square ["[" "]"]
+ :curly ["\\{" "\\}"]
+ :angle ["<" ">"]
+ :none ["." "."]})
 
 (register-example
- :left
- (into #{} (for [k (keys parens-table)] [:left k]))
- :right
- (into #{} (for [k (keys parens-table)] [:right k]))
- )
+:left
+(into #{} (for [k (keys parens-table)] [:left k]))
+:right
+(into #{} (for [k (keys parens-table)] [:right k]))
+)
 
 (defcmd :left :normal [[_ v :as data]]
-  {:pre[(pre-check-tex
-         (belong? (keys parens-table) v)
-         :left
-         data)]}
-  (str "\\left"
-       (-> v parens-table first)))
+{:pre[(pre-check-tex
+       (belong? (keys parens-table) v)
+       :left
+       data)]}
+(str "\\left"
+     (-> v parens-table first)))
 
 (defcmd :right :normal [[_ v :as data]]
-  {:pre[(pre-check-tex
-         (belong? (keys parens-table) v)
-         :right
-         data)]}
-  (str "\\right"
-       (-> v parens-table second)))
+{:pre[(pre-check-tex
+       (belong? (keys parens-table) v)
+       :right
+       data)]}
+(str "\\right"
+     (-> v parens-table second)))
 
 (defcmd :paren :normal [[_ k & more :as data]]
-  {:pre[(pre-check-tex 
-         (belong? (keys parens-table) k)
-         :paren
-         data
-         )]}
-  (let [[l r] (get parens-table k)]
-    (format "%s %s %s" l (tex more) r)))
+{:pre[(pre-check-tex 
+       (belong? (keys parens-table) k)
+       :paren
+       data
+       )]}
+(let [[l r] (get parens-table k)]
+  (format "%s %s %s" l (tex more) r)))
 
 (register-example
- :paren
- #{[:paren :curly 1]
-   [:paren :angle 1]
-   [:paren :round 1]
-   [:paren :square 1]})
+:paren
+#{[:paren :curly 1]
+  [:paren :angle 1]
+  [:paren :round 1]
+  [:paren :square 1]})
 
 (defcmd :cases :environment :default)
 
 ;; preamble
 
 (s/def ::documentclass-spec
-  (s/cat :cmd keyword?
-         :opt (s/? (s/map-of #{:opt} (s/coll-of any?)))
-         :args any?))
+(s/cat :cmd keyword?
+       :opt (s/? (s/map-of #{:opt} (s/coll-of any?)))
+       :args any?))
 
 (defcmd :documentclass :normal [data]
-  {:pre[(pre-check-tex
-         (s/valid? ::documentclass-spec data)
-         :documentclass
-         data)]}
-  (let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
-    (cond-> "\\documentclass"
-      (seq opt) (str (format "[%s]"(join "," opt)))
-      true (str (format "{%s}" (first args))))))
+{:pre[(pre-check-tex
+       (s/valid? ::documentclass-spec data)
+       :documentclass
+       data)]}
+(let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
+  (cond-> "\\documentclass"
+    (seq opt) (str (format "[%s]"(join "," opt)))
+    true (str (format "{%s}" (first args))))))
 
 (register-example
- :documentclass
- #{[:documentclass "article"]
-   [:documentclass {:opt "12pt"} "article"]})
+:documentclass
+#{[:documentclass "article"]
+  [:documentclass {:opt "12pt"} "article"]})
 
 (defcmd :usepackage :normal [data]
-  {:pre[(pre-check-tex
-         (s/valid? ::documentclass-spec data)
-         :usepckage
-         data)]}
+{:pre[(pre-check-tex
+       (s/valid? ::documentclass-spec data)
+       :usepckage
+       data)]}
   (let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
     (cond-> "\\usepackage"
       (seq opt)      (str (format "[%s]"(join "," opt)))
@@ -617,22 +618,12 @@
       as (str (format "_{%s}" (tex as)))
       args (str (tex args)))))
 
-(defn- lim-type-register-coll [coll]
-  (eval `(do
-           ~@(map
-              (fn [id]
-                (let [data (gensym "data")]
-                  `(defcmd ~id :normal [~data] (lim-type-impl ~data) ) ))
-              coll))))
-
 (def ^:private  lim-type-cmds [:limsup :liminf :lim :varlimsup :varliminf])
 
-(lim-type-register-coll lim-type-cmds)
+(normal-command-impl-coll `lim-type-impl lim-type-cmds)
 
 (doseq [id lim-type-cmds]
   (register-example id [id {:as ["x" :to 1]} "f(x)"]))
-
-
 
 
 
