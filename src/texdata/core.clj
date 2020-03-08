@@ -404,7 +404,7 @@
 (defn- newtheorem-impl [data]
   {:pre [(pre-check-tex
           (s/valid? ::newtheorem-spec data)
-          :newtheorem
+          (first data)
           data)]}
   (let [{{in :in following :following} :opt cmd :cmd tag :tag n :name}
         (s/conform ::newtheorem-spec data)
@@ -472,6 +472,17 @@
    :mathbb :mathcal :mathbf])
 
 ;; table
+
+(s/def ::table-spec
+  (s/cat :cmd keyword?
+         :opt (s/? (s/map-of #{:pos} string?))
+         :body (s/+ any?)))
+
+(defn- table-impl [data]
+  {:pre[(pre-check-tex
+         (s/valid? ::table-spec data)
+         (first data)
+         data)]})
 
 (defcmd :table :environment
   [[_ pos & args]]

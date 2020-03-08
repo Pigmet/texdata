@@ -70,8 +70,6 @@
           [:math p3 "."]]]])))
 
 
-  test-path
-  ;; => 
   (compile-and-view
    "test/texdata/examples/out/test.tex"
    dirac-delta )
