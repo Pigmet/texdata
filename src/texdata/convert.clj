@@ -5,6 +5,8 @@
    (org.apache.pdfbox.rendering PDFRenderer ImageType)
    (org.apache.pdfbox.pdmodel PDDocument)))
 
+;; pdf -> png conversion
+
 (defn- new-doc [path]
   (PDDocument/load (new File path)))
 

@@ -57,13 +57,14 @@
        "And for any function" [:dol "f(x),"] "we have the equality"
        [:math p3 "."]]])))
 
-(compile-and-view
- "test/texdata/examples/out/test.tex"
- dirac-delta)
+(comment
 
-(pdf->image
- "/Users/naka/Documents/work/clojure/lib/texdata/test/texdata/examples/out/test.pdf"
- "/Users/naka/Documents/work/clojure/lib/texdata/test/texdata/examples/out/test.png")y
+  (compile-and-view
+   "test/texdata/examples/out/test.tex"
+   dirac-delta)
 
+  (pdf->image
+   "/Users/naka/Documents/work/clojure/lib/texdata/test/texdata/examples/out/test.pdf"
+   "/Users/naka/Documents/work/clojure/lib/texdata/test/texdata/examples/out/test.png")
 
-
+  )
