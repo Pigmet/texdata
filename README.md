@@ -8,7 +8,7 @@ A Clojure library designed to produce Tex documents.
 Add this to the dependencies:
 
 ```clojure
-[texdata "0.1.3-SNAPSHOT"]
+[texdata "0.1.4-SNAPSHOT"]
 ```
 For testing purposes, create test.tex file somewhere, let's say in the test directory of the project.
 
