@@ -3,6 +3,7 @@
             [texdata.compile :refer [compile-and-view]]
             [clojure.string :refer [join]]))
 
+
 (def standard-packages
   {:amsmath []
    :xcolor []
@@ -11,7 +12,8 @@
    :enumerate []
    :geometry ["left = 20mm" "right = 20mm"]
    :graphicx []
-   :mathtools[]})
+   :mathtools[]
+   :inputenc ["itf8"]})
 
 (def test-path "test/texdata/examples/out/test.tex")
 
@@ -32,12 +34,21 @@
 (let [s
       (tex [:documentclass "article"]
            [:usepackage "amsmath"]
-           [:newtheorem "theorem" "Theorem"]
+           [:newtheorem {:in "section"} "theorem" "Theorem"]
+           [:newtheorem {:following "theorem"} "lemma" "Lemma"]
            [:document
-            "Here goes my theorem."
-            [:begin "theorem"
-             [:math "E=mc"]]])]
+            (tex->
+             (tex
+              [:section "intro"]
+              "Here is my theorem"
+              [:begin "theorem" [:math "E=1"]]
+              [:begin "lemma" [:math "m=1"]]
+              [:begin "lemma" [:math "c=1"]]
+              [:section "new topic"]
+              [:begin "theorem" [:math "x"]])
+             :huge)])]
   (compile-and-view test-path s))
+
 
 (comment
   

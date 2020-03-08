@@ -390,14 +390,52 @@
 (defcmd-coll-default :normal
   [:part :chapter :section :subsection :subsubsection :date])
 
-(defcmd :newtheorem :normal [[cmd x y]]
-  (format "\\%s{%s}{%s}" (name cmd) (tex x) (tex y)))
+(s/def ::newtheorem-spec
+  (s/cat :cmd keyword?
+         :opt (s/? (s/map-of #{:in :following} string?))
+         :tag string?
+         :name string?))
 
-(defcmd :begin :normal [[_ tag & more]]
-  (format "\\begin{%s} %s \\end{%s}" (tex tag) (tex more) (tex tag)))
+(defcmd :newtheorem :normal [data]
+  {:pre [(pre-check-tex
+          (s/valid? ::newtheorem-spec data)
+          :newtheorem
+          data)]}
+  (let [{{in :in following :following} :opt cmd :cmd tag :tag n :name}
+        (s/conform ::newtheorem-spec data)
+        head (format "\\%s{%s}" (name cmd) tag)]
+    (cond
+      in (str head (format "{%s}[%s]" n in))
+      following (str head (format "[%s]{%s}" following n))
+      :else (str head (format "{%s}" n)))))
 
-(register-example :begin
-                  [:begin "Theorem" 1 2])
+(tex [:newtheorem {:following "theorem"} "lemma" "Lemma"])
+
+(register-example :newtheorem
+                  #{[:newtheorem "theorem" "Theorem"]
+                    [:newtheorem {:in "section"} "theorem" "Theorem" ]
+                    [:newtheorem {:following "theorem"} "lemma" "Lemma"]
+                    })
+
+(s/def ::begin-spec
+  (s/cat :cmd keyword?
+         :opt (s/? (s/map-of #{:name} string?))
+         :tag string?
+         :args (s/+ any?)))
+
+(defcmd :begin :normal [data]
+  {:pre[(pre-check-tex
+         (s/valid? ::begin-spec data)
+         :begin
+         data)]}
+  (let [{{n :name} :opt tag :tag args :args} (s/conform ::begin-spec data)]
+    (cond-> (format "\\begin{%s}" tag)
+      n (str (format "[%s]" n))
+      true (str (format "%s\\end{%s}" (tex args) tag)))))
+
+(register-example
+ :begin
+ [:begin {:name "Newton"} "theorem" [:math "F=ma"]])
 
 (register-example
  :newtheorem
@@ -498,7 +536,7 @@
 (register-example
  :item  #{[:item "Newton"]
           [:item {:name [:dol "F=ma"]} "Newton"]}
- 
+
  :itemize   [:itemize
              [:item {:name [:dol "E=mc"]} "Einstein"]
              [:item {:name [:dol "F=ma"]} "Newton"]]
