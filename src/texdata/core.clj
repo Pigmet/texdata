@@ -197,12 +197,15 @@
 
 (def ^:private  example-repository (atom{}))
 
-(defn register-example [& kvs]
+(defn register-example
+  [& kvs]
   (doseq [[k v] (partition 2 kvs)]
     (swap! example-repository assoc k v))
   @example-repository)
 
-(defn example [id] (get @example-repository id))
+(defn example
+  "Returns example(s) for the command k."
+  [k] (get @example-repository k))
 
 ;; commands implementation
 
@@ -578,7 +581,6 @@
   [:item {:name [:dol "E=mc"]} "Einstein"]
   [:item {:name [:dol "F=ma"]} "Newton"]] )
 
-
 ;; other commands
 
 (defcmd :dol :normal [[_ & args]]
@@ -601,8 +603,8 @@
 
 (s/def ::lim-spec
   (s/cat :cmd keyword?
-         :opt (s/? (s/map-of #{:as} any?))
-         :args (s/* any?)))
+         :opt (s/? (s/keys :req-un [::as]))
+         :args (s/* (complement map?))))
 
 (defn- lim-type-impl [data]
   {:pre[(pre-check-tex
@@ -628,6 +630,7 @@
 
 (doseq [id lim-type-cmds]
   (register-example id [id {:as ["x" :to 1]} "f(x)"]))
+
 
 
 
