@@ -211,7 +211,7 @@
 ;; new decorators for int.
 
 (def ^:private int-decorators
-  {  :from tex-sub
+  {:from tex-sub
    :on tex-sub
    :to tex-pow})
 
@@ -472,6 +472,34 @@
 ;; ref
 
 (defcmd-coll-default :normal [:ref :label :pageref])
+
+;; itemize
+
+(defcmd :itemize :environment :default)
+
+(s/def ::item-spec (s/cat :cmd keyword?
+                          :opt (s/? (s/map-of #{:name} any?))
+                          :args (s/* any?)))
+
+(defcmd :item :normal [data]
+  {:pre [(pre-check-tex
+          (s/valid? ::item-spec data)
+          :item
+          data)]}
+  (let[{{n :name} :opt args :args} (s/conform ::item-spec data)]
+    (cond-> (str "\\item")
+      n (str (format "{%s}" (tex n) ))
+      true (tex args))))
+
+(register-example
+ :item  #{[:item "Newton"]
+          [:item {:name [:dol "F=ma"]} "Newton"]}
+ :itemize   [:itemize
+             [:item {:name [:dol "E=mc"]} "Einstein"]
+             [:item {:name [:dol "F=ma"]} "Newton"]])
+
+
+
 
 ;; other commands
 

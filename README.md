@@ -151,7 +151,7 @@ example is a function to obtain expected input examples for each command.
 ```
 ### defining new commands
 
-There may be tiemes when you want to add a new command. defcmd is a macro designed for that purpose. Its grammar is as follows:
+There may be times when you want to add a new command. defcmd is a macro designed for that purpose. Its grammar is as follows:
 
 ```clojure
 (defcmd command-keyword command-type &body)
@@ -165,7 +165,7 @@ Here, command-keyword is a keyword signifying the command to be defined. command
 
 :environment commands are such ones as :equation, namely, they are commands sandwiched between \begin{...} and \end{...}. :normal commands are other commands that takes arguments (e.g., :frac, :color). :independent commands are specified by standalone keywords that are converted to TeX symbols. 
 
-defcmd provides default implemenation for :environment and :normal commands. Let's supporose you want to register a new environment command :hoge with the desired result:
+defcmd provides default implementation for :environment and :normal commands. Let's suppose you want to register a new environment command :hoge with the desired result:
 
 ```clojure
 (tex [:hoge "hello"])
@@ -187,13 +187,13 @@ Other times, you may need to have more specific structure. Let's suppose that yo
 ;; => "\\mycolor{red}{hello}"
 ```
 
-Regitering :my-color requires giving necesary details in defcmd:
+Registering :my-color requires giving necessary details in defcmd:
 
 ```clojure
 (defcmd :my-color :normal [[_ c & args]]
   (format "\\mycolor{%s}{%s}" c (tex args)))
 ```
-When not using the :default keyword as explained above, the @body part of the defcmd is like that of defn. Let me note that its parameter is supposed to be a vector (not variadic argument list ), whose first item is the command keyword (:my-color in the above example).
+When not using the :default keyword as explained above, the @body part of the defcmd is like that of defn. Let me note that its parameter is supposed to be a vector (not variable argument list ), whose first item is the command keyword (:my-color in the above example).
 
 ## full example
 

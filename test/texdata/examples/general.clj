@@ -29,10 +29,11 @@
    test-path
    (demo-string args)))
 
-
+(view
+ (tex->
 
 (comment
-
+  
 
   (def dirac-delta
     (let [p1 (tex :delta "(x)"
