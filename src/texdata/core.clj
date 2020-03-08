@@ -213,8 +213,6 @@
 
 ;; basic math 
 
-;; new decorators for int.
-
 (def ^:private int-decorators
   {:from tex-sub
    :on tex-sub
