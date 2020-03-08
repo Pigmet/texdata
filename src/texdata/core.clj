@@ -478,32 +478,25 @@
          :opt (s/? (s/map-of #{:pos} string?))
          :body (s/+ any?)))
 
-(defn- table-impl [data]
+(defn- table-impl [data pos-type]
   {:pre[(pre-check-tex
          (s/valid? ::table-spec data)
          (first data)
-         data)]})
+         data)]}
+  (let [{{pos :pos} :opt cmd :cmd body :body}
+        (s/conform ::table-spec data)
+        pos-fn (if (= pos-type :square)
+                 (fn [s] (format "[%s]" s ))
+                 (fn [s] (format "{%s}" s)))]
+    (cond-> (format "\\begin{%s}" (name cmd))
+      pos (str (pos-fn pos))
+      body (str (tex body) (format "\\end{%s}" (name cmd))))))
 
-;;(tex [:newtheorem])
+(defcmd :table :environment[data]
+  (table-impl data :square))
 
-(defcmd :table :environment
-  [[_ pos & args]]
-  (env-cmd-s "table"
-             (format "[%s]" (tex pos))
-             (tex args)))
-
-(defcmd :tabular :environment
-  [[_ pos & args]]
-  (env-cmd-s "tabular"
-             (format "{%s}" (tex pos))
-             (tex args)))
-
-(register-example
- :table
- [:table "h" [:tabular "cc" 1 :amp 2]]
- :tabular
- [:table "h" [:tabular "cc" 1 :amp 2]]
- )
+(defcmd :tabular :environment [data]
+  (table-impl data :curly))
 
 (defcmd-coll-default :environment
   [:center :flushleft :flushright])
@@ -513,28 +506,28 @@
 ;;matrix
 
 (defcmd-coll-default :environment
-  [:matrix :pmatrix :vmatrix :bmatrix :Vmatrix])
+[:matrix :pmatrix :vmatrix :bmatrix :Vmatrix])
 
 ;; accent
 
 (defcmd-coll-default :normal [:b :t :u :H :d :r :c :v])
 
 (defn- accent-impl-code [id s]
-  (let [args (gensym "args")]
-    `(defcmd ~id :normal [[~'_ & ~args]]
-       (format "\\%s{%s}" ~s (tex ~args)))))
+(let [args (gensym "args")]
+`(defcmd ~id :normal [[~'_ & ~args]]
+   (format "\\%s{%s}" ~s (tex ~args)))))
 
 (doseq [[id s] [[:a-tilde "~"] [:a-hat "^"] [:a-dash "'"] [:a-dot "."]]]
-  (eval (accent-impl-code id s)))
+(eval (accent-impl-code id s)))
 
 ;; accent in math mode
 
 (defcmd-coll-default
-  :normal
-  [:tilde :grave :hat :vec :check :breve :acute  :dot :var :ddot])
+:normal
+[:tilde :grave :hat :vec :check :breve :acute  :dot :var :ddot])
 
 (defcmd :prime :normal [[_ & args]]
-  (format "%s\\sp{\\prime}" (tex args)))
+(format "%s\\sp{\\prime}" (tex args)))
 
 ;; ref
 
@@ -543,45 +536,45 @@
 ;; itemize
 
 (defcmd-coll-default :environment
-  [:itemize :enumerate :description])
+[:itemize :enumerate :description])
 
 (s/def ::item-spec (s/cat :cmd keyword?
-                          :opt (s/? (s/map-of #{:name} any?))
-                          :args (s/* any?)))
+:opt (s/? (s/map-of #{:name} any?))
+:args (s/* any?)))
 
 (defcmd :item :normal [data]
-  {:pre [(pre-check-tex
-          (s/valid? ::item-spec data)
-          :item
-          data)]}
-  (let[{{n :name} :opt args :args} (s/conform ::item-spec data)]
-    (cond-> (str "\\item")
-      n (str (format "{%s}" (tex n) ))
-      true (tex args))))
+{:pre [(pre-check-tex
+        (s/valid? ::item-spec data)
+        :item
+        data)]}
+(let[{{n :name} :opt args :args} (s/conform ::item-spec data)]
+(cond-> (str "\\item")
+  n (str (format "{%s}" (tex n) ))
+  true (tex args))))
 
 (register-example
- :item  #{[:item "Newton"]
-          [:item {:name [:dol "F=ma"]} "Newton"]}
+:item  #{[:item "Newton"]
+[:item {:name [:dol "F=ma"]} "Newton"]}
 
- :itemize   [:itemize
-             [:item {:name [:dol "E=mc"]} "Einstein"]
-             [:item {:name [:dol "F=ma"]} "Newton"]]
+:itemize   [:itemize
+[:item {:name [:dol "E=mc"]} "Einstein"]
+[:item {:name [:dol "F=ma"]} "Newton"]]
 
- :enumerate
- [:enumerate
-  [:item {:name [:dol "E=mc"]} "Einstein"]
-  [:item {:name [:dol "F=ma"]} "Newton"]]
+:enumerate
+[:enumerate
+[:item {:name [:dol "E=mc"]} "Einstein"]
+[:item {:name [:dol "F=ma"]} "Newton"]]
 
- :description
- [:itemize
-  [:item {:name [:dol "E=mc"]} "Einstein"]
-  [:item {:name [:dol "F=ma"]} "Newton"]] )
+:description
+[:itemize
+[:item {:name [:dol "E=mc"]} "Einstein"]
+[:item {:name [:dol "F=ma"]} "Newton"]] )
 
 
 ;; other commands
 
 (defcmd :dol :normal [[_ & args]]
-  (format "$ %s $" (tex args)))
+(format "$ %s $" (tex args)))
 
 (defcmd :text :normal :default)
 
@@ -590,27 +583,27 @@
 (defcmd :sqrt :normal :default)
 
 (defcmd :sqrt-n :normal
-  [[_ n & more]]
-  (format "\\sqrt[%s]{%s}" (tex n) (tex more)))
+[[_ n & more]]
+(format "\\sqrt[%s]{%s}" (tex n) (tex more)))
 
 (register-example :sqrt-n [:sqrt-n 3 "x"])
 
 (defcmd :minus :normal [[_ & more]]
-  (format "- %s" (tex more)))
+(format "- %s" (tex more)))
 
 (def ^:private lim-decorators
-  {:as tex-sub})
+{:as tex-sub})
 
 (defn- lim-type-impl-code [id]
-  (let [data (gensym "data")
-        cmd (gensym "cmd")
-        opt (gensym "opt")
-        args (gensym "args")]
-    `(defcmd ~id :normal [~data]
-       (let [{~cmd :cmd ~opt :opt ~args :args} (conform-command ~data)]
-         (cond-> (str "\\" (name ~cmd))
-           (seq ~opt) (decorate-tex-impl lim-decorators ~opt)
-           true (str " " (tex ~args)))))))
+(let [data (gensym "data")
+      cmd (gensym "cmd")
+      opt (gensym "opt")
+      args (gensym "args")]
+`(defcmd ~id :normal [~data]
+   (let [{~cmd :cmd ~opt :opt ~args :args} (conform-command ~data)]
+     (cond-> (str "\\" (name ~cmd))
+       (seq ~opt) (decorate-tex-impl lim-decorators ~opt)
+       true (str " " (tex ~args)))))))
 
 (doseq [id [:limsup :liminf :lim :varlimsup :varliminf]]
   (eval (lim-type-impl-code id)))

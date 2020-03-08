@@ -58,8 +58,14 @@
         "And for any function" [:dol "f(x),"] "we have the equality"
         [:math p3 "."]]]])))
 
-
 (compile-and-view
  "test/texdata/examples/out/test.tex"
- dirac-delta )
+ (view-string
+  :size :huge
+  :body
+  (tex
+"table demo"
+   [:table {:pos "h"}
+    [:tabular {:pos "cc"} 1 :amp 2]])))
+
 
