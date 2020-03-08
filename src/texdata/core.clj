@@ -603,6 +603,7 @@
 
 (s/def ::lim-spec
   (s/cat :cmd keyword?
+         ;; opt must have :as key only when it is present.
          :opt (s/? (s/keys :req-un [::as]))
          :args (s/* (complement map?))))
 
@@ -616,8 +617,6 @@
       as (str (format "_{%s}" (tex as)))
       args (str (tex args)))))
 
-(def ^:private  lim-type-cmds [:limsup :liminf :lim :varlimsup :varliminf])
-
 (defn- lim-type-register-coll [coll]
   (eval `(do
            ~@(map
@@ -625,6 +624,8 @@
                 (let [data (gensym "data")]
                   `(defcmd ~id :normal [~data] (lim-type-impl ~data) ) ))
               coll))))
+
+(def ^:private  lim-type-cmds [:limsup :liminf :lim :varlimsup :varliminf])
 
 (lim-type-register-coll lim-type-cmds)
 
