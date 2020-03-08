@@ -7,7 +7,7 @@
 (defn compile-and-view
   "Takes path to a TeX file and string.
   Writes the string in the file and TeX compiles it via the command 'pdflatex',
-  opens the resulting PDF if the compilation is successful."
+  opens the resulting PDF if the compilation was successful."
   [path s]
   (compile-and-view* path s))
 

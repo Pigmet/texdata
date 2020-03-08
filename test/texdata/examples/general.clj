@@ -1,6 +1,5 @@
 (ns texdata.example.general
   (:require [texdata.core :refer :all]
-            [texdata.compile :refer [compile-and-view]]
             [clojure.string :refer [join]]))
 
 (def standard-packages
@@ -60,12 +59,6 @@
 
 (compile-and-view
  "test/texdata/examples/out/test.tex"
- (view-string
-  :size :huge
-  :body
-  (tex
-"table demo"
-   [:table {:pos "h"}
-    [:tabular {:pos "cc"} 1 :amp 2]])))
-
+ dirac-delta)
+ 
 

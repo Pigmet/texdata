@@ -4,6 +4,26 @@ A Clojure library designed to produce Tex documents.
 
 ## Usage
 
+### quick start
+Add this to the dependencies:
+
+```clojure
+[texdata "0.1.3-SNAPSHOT"]
+```
+For testing purposes, create test.tex file somewhere, let's say in the test directory of the project.
+
+```clojure
+(ns texdata-demo.core
+  (:require [texdata.core :refer [tex compile-and-view]]))
+
+(def test-path "test/texdata_demo/test.tex")
+
+(compile-and-view
+ test-path
+ (tex [:documentclass "article"]
+      [:document "hello world"]))
+```	
+
 ### simple examples
 
 This library offers a few functions that convert Clojure data to string recognizable by TeX. tex is such a function and the below are simple examples:
