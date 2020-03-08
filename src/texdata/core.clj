@@ -198,16 +198,18 @@
 
 ;; commands implementation
 
-(defmacro pre-check-tex
-  "Evaluates test and throws ex-info if the result is logical false,
+(defn- pre-check-tex
+  "Throws ex-info if pred is logical false,
   in which case an example is attached to the exception if
   one is available."
-  [test id data]
-  `(or ~test
-       (throw
-        (ex-info ~(format "invalid input for %s" id)
-                 {:input ~data
-                  :expected-example (example ~id)}))))
+  [pred id data]
+  (let [ex (example id)]
+    (or pred
+        (throw
+         (ex-info (format "invalid input for %s" id)
+                  (cond-> {:input data}
+                    ex (assoc :expected-example ex)))))))
+
 
 ;; basic math 
 
@@ -483,6 +485,8 @@
          (s/valid? ::table-spec data)
          (first data)
          data)]})
+
+;;(tex [:newtheorem])
 
 (defcmd :table :environment
   [[_ pos & args]]
