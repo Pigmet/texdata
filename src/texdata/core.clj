@@ -480,9 +480,11 @@
 
 ;; table
 
+(s/def :table/pos string?)
+
 (s/def ::table-spec
   (s/cat :cmd keyword?
-         :opt (s/? (s/map-of #{:pos} string?))
+         :opt (s/keys :req-un [:table/pos])  
          :body (s/+ any?)))
 
 (defn- table-impl [data pos-type]
