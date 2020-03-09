@@ -88,7 +88,7 @@
 (defn tex [& args] (join " " (map data->string args)))
 
 (defn- env-cmd-s [cmd & more]
-  (format "\\begin{%s} %s \\end{%s}" cmd (tex more) cmd))
+  (format "\\begin{%s}%s \\end{%s}" cmd (tex more) cmd))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;; tex threading  ;;
@@ -628,14 +628,14 @@
          data)]}
   (let [{:keys [cmd opt v]} (s/conform ::figure-spec data)
         {:keys [pos]} opt]
-    (cond-> (str "\\" (name cmd))
-      pos (str (format "[%s]" pos))
-      v (str (format "{%s}" (tex v))))))
+    (env-cmd-s (name cmd)
+               (cond-> ""
+                 pos (str (format "[%s]" pos))
+                 v (str (format "{%s}" (tex v)))))))
 
 (register-example
  :figure
  [:figure {:pos "h"} "lion"])
-
 
 
 ;; other commands
