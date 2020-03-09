@@ -359,15 +359,17 @@
 
 ;; preamble
 
+(s/def :document/opt (s/coll-of string?))
+
 (s/def ::documentclass-spec
   (s/cat :cmd keyword?
-         :opt (s/? (s/map-of #{:opt} (s/coll-of any?)))
+         :opt (s/? (s/keys :req-un [:document/opt]))
          :args any?))
 
 (defcmd :documentclass :normal [data]
   {:pre[(pre-check-tex
          (s/valid? ::documentclass-spec data)
-         :documentclass
+         (first data)
          data)]}
   (let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
     (cond-> "\\documentclass"
@@ -377,7 +379,7 @@
 (register-example
  :documentclass
  #{[:documentclass "article"]
-   [:documentclass {:opt "12pt"} "article"]})
+   [:documentclass {:opt ["12pt" "landscape"]} "article"]})
 
 (defcmd :usepackage :normal [data]
   {:pre[(pre-check-tex
@@ -390,7 +392,10 @@
       true (str (format "{%s}" (first args))))))
 
 (register-example :usepackage
-                  #{[:usepackage "xcolor"]})
+                  #{[:usepackage "xcolor"]
+                    [:usepackage
+                     {:opt ["left = 20mm" "right = 20mm"]}
+                     "geometry"]})
 
 (defcmd :document :environment :default)
 
