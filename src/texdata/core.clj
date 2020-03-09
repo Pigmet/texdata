@@ -637,7 +637,6 @@
  :figure
  [:figure {:pos "h"} "lion"])
 
-
 ;; other commands
 
 (defcmd :dol :normal [[_ & args]]

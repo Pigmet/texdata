@@ -64,7 +64,8 @@
    dirac-delta)
 
   (pdf->image
-   "/Users/naka/Documents/work/clojure/lib/texdata/test/texdata/examples/out/test.pdf"
-   "/Users/naka/Documents/work/clojure/lib/texdata/test/texdata/examples/out/test.png")
+   "test/texdata/examples/out/test.pdf"
+   "test/texdata/examples/out/test.png")
 
   )
+
