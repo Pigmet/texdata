@@ -97,7 +97,7 @@
 (defn tex->> [exp & more]
   (reduce
    (fn [acc x]
-     (if (coll? x) (tex (concat x [acc])) ( tex [x acc])))
+     (if (coll? x) (tex (concat x [acc])) (tex [x acc])))
    (tex exp)
    more))
 
@@ -213,8 +213,8 @@
 
 (defn- pre-check-tex
   "Throws ex-info if pred is logical false,
-  in which case an example is attached to the exception if
-  one is available."
+  in which case an example is attached to the exception
+  if one is available."
   [pred id data]
   (let [ex (example id)]
     (or pred
@@ -248,6 +248,7 @@
           data)]}
   (let [{{:keys [from on to]} :opt cmd :cmd  args :args}
         (s/conform ::int-spec data)
+        ;; remove duplicates 
         from* (or from on)]
     (cond-> (format "\\%s" (name cmd))
       from* (str (format "_{%s}" (tex from*)))
@@ -276,6 +277,8 @@
 (defcmd :frac :normal [[_ x y]]
   (format "\\frac{%s}{%s}" (tex x) (tex y)))
 
+(register-example :frac [:frac 1 2])
+
 (defcmd :equation :environment :default)
 
 (defcmd :equation* :environment :default)
@@ -284,16 +287,12 @@
 
 (defcmd :align* :environment :default)
 
-(register-example
- :align
- [:align "f(x)" :amp :eq "g(x)"
-  :next
-  :amp :eq 0]
-
- :align*
- [:align* "f(x)" :amp :eq "g(x)"
-  :next
-  :amp :eq 0])
+(doseq [id [:align :align*]]
+  (register-example
+   id
+   [id "f(x)" :amp :eq "g(x)"
+    :next
+    :amp :eq 0]))
 
 (defcmd :amp :independent "&")
 
@@ -494,7 +493,7 @@
   (let [{{pos :pos} :opt cmd :cmd body :body}
         (s/conform ::table-spec data)
         pos-fn (if (= pos-type :square)
-                 (fn [s] (format "[%s]" s ))
+                 (fn [s] (format "[%s]" s))
                  (fn [s] (format "{%s}" s)))]
     (cond-> (format "\\begin{%s}" (name cmd))
       pos (str (pos-fn pos))
@@ -577,6 +576,67 @@
  [:itemize
   [:item {:name [:dol "E=mc"]} "Einstein"]
   [:item {:name [:dol "F=ma"]} "Newton"]] )
+
+;; graphics
+
+(s/def :graphics/opt (s/coll-of string?))
+
+(s/def ::graphics-spec
+  (s/cat :cmd keyword?
+         :opt (s/? (s/keys :req-un[:graphics/opt]))
+         :v any?))
+
+(defcmd :includegraphics :normal
+  [data]
+  {:pre[(pre-check-tex
+         (s/valid? ::graphics-spec data)
+         (first data)
+         data)]}
+  (let [{cmd :cmd {opt :opt} :opt v :v}
+        (s/conform ::graphics-spec data)]
+    (cond-> (str "\\" (name cmd))
+      opt (str (format "[%s]" (join "," opt) ))
+      v (str (format "{%s}" (tex v))))))
+
+(register-example
+ :includegraphics
+ [:includegraphics {:opt ["width=3cm" "height=12cm"]} "lion"])
+
+(defcmd :graphicspath :normal [[cmd & args]]
+  (format "\\%s{ %s }" (name cmd)
+          (join " "
+                (map
+                 (fn[x] (format "{%s}" (tex x)))
+                 args))))
+
+(register-example
+ :graphicspath
+ [:graphicspath "./images1/" "./images2/"])
+
+(s/def :figure/pos string?)
+
+(s/def ::figure-spec
+  (s/cat :cmd keyword?
+         :opt  (s/keys :req-un [:figure/pos])
+         :v any?))
+
+(defcmd :figure :environment
+  [data]
+  {:pre[(pre-check-tex
+         (s/valid? ::figure-spec data)
+         (first data)
+         data)]}
+  (let [{:keys [cmd opt v]} (s/conform ::figure-spec data)
+        {:keys [pos]} opt]
+    (cond-> (str "\\" (name cmd))
+      pos (str (format "[%s]" pos))
+      v (str (format "{%s}" (tex v))))))
+
+(register-example
+ :figure
+ [:figure {:pos "h"} "lion"])
+
+
 
 ;; other commands
 

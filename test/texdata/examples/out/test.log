@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019) (preloaded format=pdflatex 2020.2.4)  8 MAR 2020 15:14
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019) (preloaded format=pdflatex 2020.2.4)  9 MAR 2020 15:18
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -126,7 +126,7 @@ File: l3backend-pdfmode.def 2019-04-06 L3 backend support: PDF mode
 \l__kernel_color_stack_int=\count190
 \l__pdf_internal_box=\box47
 )
-(./test.aux)
+No file test.aux.
 \openout1 = `test.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 1.
@@ -143,7 +143,6 @@ LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 1.
 LaTeX Font Info:    ... okay on input line 1.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 1.
 LaTeX Font Info:    ... okay on input line 1.
-
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
@@ -191,13 +190,13 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 {/usr/local/texlive/2019/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./test
 .aux) ) 
 Here is how much of TeX's memory you used:
- 2034 strings out of 481248
- 26757 string characters out of 5918199
+ 2032 strings out of 481248
+ 26739 string characters out of 5918199
  262699 words of memory out of 5000000
  17322 multiletter control sequences out of 15000+600000
  534037 words of font info for 32 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 30i,12n,31p,719b,142s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 30i,12n,31p,717b,142s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmex1
 0.pfb></usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10
 .pfb></usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.p
