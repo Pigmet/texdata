@@ -382,7 +382,7 @@
 (defcmd :usepackage :normal [data]
   {:pre[(pre-check-tex
          (s/valid? ::documentclass-spec data)
-         :usepckage
+         (first data)
          data)]}
   (let[{cmd :cmd {opt :opt} :opt args :args} (conform-command data)]
     (cond-> "\\usepackage"
