@@ -57,21 +57,6 @@
        "And for any function" [:dol "f(x),"] "we have the equality"
        [:math p3 "."]]])))
 
-;; demo
-
-(def demo-path-2 "/Users/naka/Documents/work/tex/misc/clojure-demo/test.tex")
-
-(compile-and-view
- demo-path-2
- (view-string :body
-              (tex [:includegraphics
-                    {:opt ["width=3cm"]}"banana"]
-                   "This is my favorite fruit."
-                   [:figure {:pos "h"}
-                    [:includegraphics
-                     {:opt ["width=10cm" "height=10cm"]}
-                     "banana"]])))
-
 (comment
 
   (compile-and-view
