@@ -51,6 +51,83 @@
 
 (s/def ::command-spec
   (s/cat :cmd argument-command?
-         :opt (s/? map?)
          :args (s/* any?)))
+
+(s/def ::decorate-spec
+  (s/+ (s/cat :k #{:sub :super} :v any?)))
+
+(s/def ::tex-spec
+  (s/or :nil nil?
+        :literal (some-fn number? string?)
+        :independent keyword?
+        :decorate (s/cat :v ::tex-spec
+                         :decorate ::decorate-spec
+                         :rest (s/* ::tex-spec))
+        :command ::command-spec
+        :chunk (s/coll-of ::tex-spec)))
+
+(defn- conform-tex-spec [data]
+  (s/conform ::tex-spec data))
+
+(defmulti data->string
+  {:private true}
+  (fn [data] (-> data conform-tex key)))
+
+(defn tex[& args] (join " " (map data->string args)))
+
+(defmethod data->string :nil [_] "")
+
+(defmethod data->string :literal [x] (str x))
+
+(defmethod data->string :chunk [x] (apply tex x))
+
+(defn- parse-decorate
+  "Decomposes data accroding to its component in the
+  :decorate type of ::tex-spec."
+  [data]
+  (let [{v :v decor :decorate r :rest}
+        (val (conform-tex-spec data))]
+    {:v (s/unform ::tex-spec v)
+     :decorate (apply hash-map(s/unform ::decorate-spec decor))
+     :others (s/unform (s/* ::tex-spec) r)}))
+
+(defmethod data->string :decorate[data]
+  (let [{:keys [v decorate others]} (parse-decorate data)
+        {:keys [sub super]} decorate]
+    (cond-> (tex v)
+      sub (str (format "_{%s}" (tex sub)))
+      super (str (format "^{%s}" (tex super)))
+      others (str (tex others)))))
+
+(defmethod data->string :independent [data]
+  (str "\\" (if-let [s (-> data get-command :s)] s (name data))))
+
+(register-command :equation :environment)
+
+(defmulti handle-env-cmd {:private true}identity)
+
+(defn- decorate-env-s [cmd-s body]
+  (format "\\begin{%s}%s \\end{%s}" cmd-s body cmd-s))
+
+(defmethod handle-env-cmd :default [[cmd & more]]
+  (decorate-env-s (name cmd) (tex more)))
+
+(defmulti handle-normal-cmd {:private true} identity)
+
+(defmethod handle-normal-cmd :default
+  [[cmd & more]]
+  (format "\\%s{%s}" (name cmd) (tex more)))
+
+(defmethod data->string :command [data]
+  (if (-> data first get-command :type (= :environment))
+    (handle-env-cmd data)
+    (handle-normal-cmd data)))
+
+
+
+
+
+
+
+
 
