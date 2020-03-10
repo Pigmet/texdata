@@ -71,9 +71,9 @@
 
 (defmulti data->string
   {:private true}
-  (fn [data] (-> data conform-tex key)))
+  (fn [data] (-> data conform-tex-spec key)))
 
-(defn tex[& args] (join " " (map data->string args)))
+(defn tex [& args] (join " " (map data->string args)))
 
 (defmethod data->string :nil [_] "")
 
@@ -104,7 +104,9 @@
 
 ;;(register-command :equation :environment)
 
-(defmulti handle-env-cmd {:private true}identity)
+;; be careful about the selector -> it should be the command key,
+;; hence the first item of vector.
+(defmulti handle-env-cmd {:private true} first)
 
 (defn- decorate-env-s [cmd-s body]
   (format "\\begin{%s}%s \\end{%s}" cmd-s body cmd-s))
@@ -112,7 +114,7 @@
 (defmethod handle-env-cmd :default [[cmd & more]]
   (decorate-env-s (name cmd) (tex more)))
 
-(defmulti handle-normal-cmd {:private true} identity)
+(defmulti handle-normal-cmd {:private true} first)
 
 (defmethod handle-normal-cmd :default
   [[cmd & more]]
@@ -123,13 +125,27 @@
     (handle-env-cmd data)
     (handle-normal-cmd data)))
 
+(conform-tex-spec [:math 1])
+
 (s/def ::defcmd-spec
   (s/cat :id keyword?
          :type #{:normal :environment :independent}
          :body (s/+ any?)))
 
 (defmacro defcmd
-  "Registers a new command."
+  "Registers a new command.
+
+  Example:
+
+  Define normal command:
+  (defcmd :math :normal [...]  )
+
+  Define environment command:
+  (defcmd :equation :environment [...])
+
+  Define independent command:
+  (defcmd :amp :independent \"&\")
+  "
   [id type & body]
   (let [input (list* id type body)
         valid? (s/valid? ::defcmd-spec input)
@@ -147,6 +163,11 @@
                        (register-command ~id ~type)
                        (defmethod ~(imple-fns type) ~id ~@body))))))
 
+(defn- defcmd-coll-default [type coll]
+  (eval  `(do ~@(map
+                 (fn [id] `(defcmd ~id ~type :default))
+                 coll))))
+
 (def ^:private example-repository 
   (atom {}))
 
@@ -155,17 +176,11 @@
 (defn register-example [& kvs]
   (doseq [[k v] kvs] (swap! example-repository assoc k v)))
 
+;; math expressions
 
+(defcmd :math :normal [[_ & more]] (format "\\[ %s \\]" (tex more)))
 
-
-
-
-
-
-
-
-
-
-
+(defcmd-coll-default :environment
+  [:equation :equation* :align :align*])
 
 
