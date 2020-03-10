@@ -102,7 +102,7 @@
 (defmethod data->string :independent [data]
   (str "\\" (if-let [s (-> data get-command :s)] s (name data))))
 
-(register-command :equation :environment)
+;;(register-command :equation :environment)
 
 (defmulti handle-env-cmd {:private true}identity)
 
@@ -122,6 +122,44 @@
   (if (-> data first get-command :type (= :environment))
     (handle-env-cmd data)
     (handle-normal-cmd data)))
+
+(s/def ::defcmd-spec
+  (s/cat :id keyword?
+         :type #{:normal :environment :independent}
+         :body (s/+ any?)))
+
+(defmacro defcmd
+  "Registers a new command."
+  [id type & body]
+  (let [input (list* id type body)
+        valid? (s/valid? ::defcmd-spec input)
+        imple-fns {:environment `handle-env-cmd
+                   :normal `handle-normal-cmd}
+        default? (-> body first (= :default))
+        ind? (= type :independent)]
+    (if-not valid? (throw
+                    (ex-info "invalid input for defcmd"
+                             {:input input}))
+            (cond
+              ind? `(register-command ~id ~type ~(first body))
+              default? `(register-command ~id ~type)
+              :else `(do
+                       (register-command ~id ~type)
+                       (defmethod ~(imple-fns type) ~id ~@body))))))
+
+(def ^:private example-repository 
+  (atom {}))
+
+(defn get-all-examples [] @example-repository)
+
+(defn register-example [& kvs]
+  (doseq [[k v] kvs] (swap! example-repository assoc k v)))
+
+
+
+
+
+
 
 
 
