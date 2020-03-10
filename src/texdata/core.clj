@@ -100,7 +100,9 @@
       others (str (tex others)))))
 
 (defmethod data->string :independent [data]
-  (str "\\" (if-let [s (-> data get-command :s)] s (name data))))
+  (if-let [s (-> data get-command :s)]
+    s
+    (str "\\" (name data))))
 
 ;;(register-command :equation :environment)
 
@@ -109,31 +111,29 @@
 (defmulti handle-env-cmd {:private true} first)
 
 (defn- decorate-env-s [cmd-s body]
-  (format "\\begin{%s}%s \\end{%s}" cmd-s body cmd-s))
+(format "\\begin{%s}%s \\end{%s}" cmd-s body cmd-s))
 
 (defmethod handle-env-cmd :default [[cmd & more]]
-  (decorate-env-s (name cmd) (tex more)))
+(decorate-env-s (name cmd) (tex more)))
 
 (defmulti handle-normal-cmd {:private true} first)
 
 (defmethod handle-normal-cmd :default
-  [[cmd & more]]
-  (format "\\%s{%s}" (name cmd) (tex more)))
+[[cmd & more]]
+(format "\\%s{%s}" (name cmd) (tex more)))
 
 (defmethod data->string :command [data]
-  (if (-> data first get-command :type (= :environment))
-    (handle-env-cmd data)
-    (handle-normal-cmd data)))
-
-(conform-tex-spec [:math 1])
+(if (-> data first get-command :type (= :environment))
+  (handle-env-cmd data)
+  (handle-normal-cmd data)))
 
 (s/def ::defcmd-spec
-  (s/cat :id keyword?
-         :type #{:normal :environment :independent}
-         :body (s/+ any?)))
+(s/cat :id keyword?
+       :type #{:normal :environment :independent}
+       :body (s/+ any?)))
 
 (defmacro defcmd
-  "Registers a new command.
+"Registers a new command.
 
   Example:
 
@@ -146,30 +146,33 @@
   Define independent command:
   (defcmd :amp :independent \"&\")
   "
-  [id type & body]
-  (let [input (list* id type body)
-        valid? (s/valid? ::defcmd-spec input)
-        imple-fns {:environment `handle-env-cmd
-                   :normal `handle-normal-cmd}
-        default? (-> body first (= :default))
-        ind? (= type :independent)]
-    (if-not valid? (throw
-                    (ex-info "invalid input for defcmd"
-                             {:input input}))
-            (cond
-              ind? `(register-command ~id ~type ~(first body))
-              default? `(register-command ~id ~type)
-              :else `(do
-                       (register-command ~id ~type)
-                       (defmethod ~(imple-fns type) ~id ~@body))))))
+[id type & body]
+(let [input (list* id type body)
+      valid? (s/valid? ::defcmd-spec input)
+      imple-fns {:environment `handle-env-cmd
+                 :normal `handle-normal-cmd}
+      default? (-> body first (= :default))
+      ind? (= type :independent)]
+  (if-not valid? (throw
+                  (ex-info "invalid input for defcmd"
+                           {:input input}))
+          (cond
+            ind? `(register-command ~id ~type ~(first body))
+            default? `(register-command ~id ~type)
+            :else `(do
+                     (register-command ~id ~type)
+                     (defmethod ~(imple-fns type) ~id ~@body))))))
 
-(defn- defcmd-coll-default [type coll]
-  (eval  `(do ~@(map
-                 (fn [id] `(defcmd ~id ~type :default))
-                 coll))))
+(defn- defcmd-coll-default
+"Takes command type and collection of command keys.
+  Registers them (the commands) via default implementation."
+[type coll]
+(eval  `(do ~@(map
+               (fn [id] `(defcmd ~id ~type :default))
+               coll))))
 
 (def ^:private example-repository 
-  (atom {}))
+(atom {}))
 
 (defn get-all-examples [] @example-repository)
 
@@ -180,7 +183,20 @@
 
 (defcmd :math :normal [[_ & more]] (format "\\[ %s \\]" (tex more)))
 
+(defcmd :dol :normal [[_ & more]] (format "$ %s $" (tex more)))
+
 (defcmd-coll-default :environment
   [:equation :equation* :align :align*])
 
+;; special symbol
+
+(defcmd :amp :independent "&")
+
+(defcmd :next :independent "\\\\")
+
+(defcmd :sp :independent "\\,")
+
+;; preamble 
+
+;;TODO register other commands 
 
