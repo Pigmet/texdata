@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019) (preloaded format=pdflatex 2020.2.4)  11 MAR 2020 16:41
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019) (preloaded format=pdflatex 2020.2.4)  11 MAR 2020 17:11
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -203,9 +203,11 @@ LaTeX Info: Thecontrolsequence`\]'isalreadyrobust on input line 129.
 \l_MT_above_shortintertext_sep=\dimen162
 \l_MT_below_shortintertext_sep=\dimen163
 )
+\c@them=\count195
+
 (/usr/local/texlive/2019/texmf-dist/tex/latex/l3backend/l3backend-pdfmode.def
 File: l3backend-pdfmode.def 2019-04-06 L3 backend support: PDF mode
-\l__kernel_color_stack_int=\count195
+\l__kernel_color_stack_int=\count196
 \l__pdf_internal_box=\box47
 )
 (./test.aux)
@@ -228,16 +230,16 @@ LaTeX Font Info:    ... okay on input line 1.
 
 (/usr/local/texlive/2019/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count196
+\scratchcounter=\count197
 \scratchdimen=\dimen164
 \scratchbox=\box48
-\nofMPsegments=\count197
-\nofMParguments=\count198
+\nofMPsegments=\count198
+\nofMParguments=\count199
 \everyMPshowfont=\toks22
-\MPscratchCnt=\count199
+\MPscratchCnt=\count266
 \MPscratchDim=\dimen165
-\MPnumerator=\count266
-\makeMPintoPDFobject=\count267
+\MPnumerator=\count267
+\makeMPintoPDFobject=\count268
 \everyMPtoPDFconversion=\toks23
 ) (/usr/local/texlive/2019/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
@@ -295,22 +297,21 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 {/usr/local/texlive/2019/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./test
 .aux) ) 
 Here is how much of TeX's memory you used:
- 3875 strings out of 481248
- 53343 string characters out of 5918199
- 297381 words of memory out of 5000000
- 19113 multiletter control sequences out of 15000+600000
- 536974 words of font info for 42 fonts, out of 8000000 for 9000
+ 3886 strings out of 481248
+ 53445 string characters out of 5918199
+ 297427 words of memory out of 5000000
+ 19122 multiletter control sequences out of 15000+600000
+ 537935 words of font info for 45 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 30i,5n,37p,572b,124s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmex1
-0.pfb></usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12
-.pfb></usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.p
-fb></usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb
->
-Output written on test.pdf (1 page, 29875 bytes).
+ 30i,5n,37p,665b,192s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx1
+2.pfb></usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.
+pfb></usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pf
+b>
+Output written on test.pdf (1 page, 27944 bytes).
 PDF statistics:
- 24 PDF objects out of 1000 (max. 8388607)
- 16 compressed objects within 1 object stream
+ 20 PDF objects out of 1000 (max. 8388607)
+ 13 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -20,9 +20,16 @@
 (defn- env-string [s body]
   (format "\\begin{%s}%s \\end{%s}" s body s))
 
-;;;;;;;;;;;;;;;;;;;;;;
-;; specs ;;
-;;;;;;;;;;;;;;;;;;;;;;
+;; data for impl
+
+(def ^:private  parens-table
+  {:round ["(" ")"]
+   :curly ["\\{" "\\}"]
+   :square ["[" "]"]
+   :angle ["<" ">"]
+   :none ["." "."]})
+
+;; specs
 
 (def ^:private command-repository (atom{}))
 
@@ -272,10 +279,20 @@
 (s/def ::array-spec
   (s/cat :cmd keyword? :pos string? :args (s/* any?)))
 
-(defn- array-impl [data]
-  {:pre[(s/valid? ::array-spec data)]}
-  (let [{:keys [cmd pos args]} (s/conform ::array-spec data)]
-    (env-string (name cmd) (str (format "{%s}" pos) (tex args)))))
+(defn- array-impl
+  "Returns string for array type commands such as
+  :array, :table or :tabular.
+
+  The optional kind value specifies the type of the brankets
+  to wrap the position string."
+  [data &{:keys [kind] :or {kind :curly}}]
+  {:pre[(s/valid? ::array-spec data)
+        (belong? [:curly :square] kind)]}
+  (let [pos-dec {:curly ["{" "}"]
+                 :square ["[" "]"]}
+        [l r] (get pos-dec kind)
+        {:keys [cmd pos args]} (s/conform ::array-spec data)]
+    (env-string (name cmd) (str (format "%s%s%s" l pos r) (tex args)))))
 
 (defcmd :array :environment [data] (array-impl data))
 
@@ -283,18 +300,19 @@
  :array
  [:array "cc" 1 :amp 2])
 
+;; table
+
+(defcmd :table :environment [data]
+  (array-impl data :kind :square))
+
+(defcmd :tabular :environment [data]
+  (array-impl data))
+
 ;; left right
 
 (s/def ::left-right-spec
   (s/cat :cmd #{:left :right}
          :type  (-> parens-table keys set)))
-
-(def ^:private  parens-table
-  {:round ["(" ")"]
-   :curly ["\\{" "\\}"]
-   :square ["[" "]"]
-   :angle ["<" ">"]
-   :none ["." "."]})
 
 (defn- left-rght-impl [[cmd v :as data]]
   {:pre [(s/valid? ::left-right-spec data)]}
@@ -323,5 +341,81 @@
 
 (defcmd-coll-default :environment
   [:huge :Huge :small :normalsize :tiny])
+
+;; theorem
+
+(s/def ::theorem-spec
+  (s/cat :cmd keyword?
+         :opt (s/?  (s/map-of #{:in} string?))
+         :tag string?
+         :v string?))
+
+(defn- newtheorem-impl
+  [data]
+  {:pre [(s/valid? ::theorem-spec data)]}
+  (let [{:keys [cmd opt tag v]} (s/conform ::theorem-spec data)
+        in (get opt :in)]
+    (cond-> (str "\\" (name cmd))
+      tag (str (format "{%s}" tag))
+      v (str (format "{%s}" v))
+      in (str (format "[%s]" in)))))
+
+(defcmd :newtheorem :normal [data] (newtheorem-impl data))
+
+(defcmd :newtheorem* :normal [data] (newtheorem-impl data))
+
+(register-example
+ :newtheorem
+ #{[:newtheorem "theorem" "Theorem"]
+   [:newtheorem {:in "section"} "theorem" "Theorem"]})
+
+(register-example
+ :newtheorem*
+ [:newtheorem* "remark" "Remark"])
+
+(defcmd :begin :normal
+  [[_ tag  & more]]
+  (format "\\begin{%s}%s \\end{%s}" tag (tex more) tag))
+
+(register-example
+ :begin
+ [:begin "theorem" [:math "x=1"]])
+
+;; chapter etc
+
+(defcmd-coll-default :normal
+  [:chapter :section :subsection :subsubsection :part])
+
+;; text formatting
+
+(defcmd-coll-default
+  :normal
+  [:underline :textbf :emph :textit
+   :textrm :textmd :textsf
+   :sup :sub :wildetilde
+   :underbrace :widehat :overrightarrow :overline :overbrace
+   :mathbb :mathcal :mathbf])
+
+;; other commands
+
+(defcmd-coll-default :normal
+  [:text])
+
+(s/def ::color-spec
+  (s/cat :cmd keyword?
+         :color (some-fn keyword? string?)
+         :args (s/* any?)))
+
+(defn- color-impl [data]
+  {:pre [(s/valid? ::color-spec data)]}
+  (let [{:keys [cmd color args]} (s/conform ::color-spec data)]
+    (format "\\%s{%s}{%s}" (name cmd) (name color)(tex args) )))
+
+(defcmd :color :normal [data] (color-impl data))
+
+(register-example
+ :color
+ [:color :red "red text"])
+
 
 
