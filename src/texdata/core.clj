@@ -258,6 +258,8 @@
   [data]
   (documentclass-impl data))
 
+(defcmd :document :environment :default)
+
 ;; TODO : add more examples for :usepackage
 
 (register-example

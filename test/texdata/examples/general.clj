@@ -32,7 +32,9 @@
 
 (compile-and-view
  test-path
- (view-string  :body "yay"))
+ (view-string  :size :huge
+               :body
+               (tex [:math :int :sub 1 :super 2 "f"])))
 
 
 
