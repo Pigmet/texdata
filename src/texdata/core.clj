@@ -17,6 +17,9 @@
 
 (defn- belong? [coll x] ((set coll) x))
 
+(defn- env-string [s body]
+  (format "\\begin{%s}%s \\end{%s}" s body s))
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; specs ;;
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -182,6 +185,8 @@
     (swap! example-repository assoc k v))
   @example-repository)
 
+(defn example [k] (get @example-repository k))
+
 ;; math expressions
 
 (defcmd :math :normal [[_ & more]] (format "\\[ %s \\]" (tex more)))
@@ -194,7 +199,7 @@
 ;; special symbol
 
 (defcmd :amp :independent "&")
-
+;
 (defcmd :next :independent "\\\\")
 
 (defcmd :sp :independent "\\,")
@@ -202,7 +207,8 @@
 ;; preamble 
 
 (s/def ::standard-opt-spec
-  (s/map-of #{:opt} (s/or :one string? :more (s/coll-of string?))))
+  (s/map-of #{:opt}
+            (s/or :one string? :more (s/coll-of string?))))
 
 (s/def ::documentclass-spec
   (s/cat :cmd keyword?
@@ -222,7 +228,9 @@
                        (if (coll? opt) (join "," opt ) opt)))
       v (str (format "{%s}" (tex v))))))
 
-(defcmd :documentclass :normal [data] (documentclass-impl data))
+(defcmd :documentclass :normal
+  [data]
+  (documentclass-impl data))
 
 (register-example
  :documentclass
@@ -230,5 +238,67 @@
    [:documentclass {:opt "landscape"} "article"]
    [:documentclass {:opt ["12pt" "landscape"]} "article"]})
 
-;;TODO register other commands 
+(defcmd :usepackage :normal
+  [data]
+  (documentclass-impl data))
+
+;; TODO : add more examples for :usepackage
+
+(register-example
+ #{ [:usepackage "amsmath"]})
+
+;;TODO register other commands
+
+;; array
+
+(s/def ::array-spec
+  (s/cat :cmd keyword? :pos string? :args (s/* any?)))
+
+(defn- array-impl [data]
+  {:pre[(s/valid? ::array-spec data)]}
+  (let [{:keys [cmd pos args]} (s/conform ::array-spec data)]
+    (env-string (name cmd) (str (format "{%s}" pos) (tex args)))))
+
+(defcmd :array :environment [data] (array-impl data))
+
+(register-example
+ :array
+ [:array "cc" 1 :amp 2])
+
+;; left right
+
+(s/def ::left-right-spec
+  (s/cat :cmd #{:left :right}
+         :type  (-> parens-table keys set)))
+
+(def ^:private  parens-table
+  {:round ["(" ")"]
+   :curly ["\\{" "\\}"]
+   :square ["[" "]"]
+   :angle ["<" ">"]
+   :none ["." "."]})
+
+(defn- left-rght-impl [[cmd v :as data]]
+  {:pre [(s/valid? ::left-right-spec data)]}
+  (let [[l r] (get parens-table v)
+        s (case cmd
+            :left l
+            :right r)]
+    (format "\\%s%s" (name cmd) s)))
+
+(defcmd :left :normal [data] (left-rght-impl data))
+
+(defcmd :right :normal [data] (left-rght-impl data))
+
+(let [ks (keys parens-table)
+      lset (set (for [k ks] [:left k]))
+      rset (set (for [k ks] [:right k]))]
+  (do
+    (register-example
+     :left
+     lset)
+    (register-example
+     :right
+     rset)))
+
 

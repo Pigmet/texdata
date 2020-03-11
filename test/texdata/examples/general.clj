@@ -29,6 +29,8 @@
        (tex other)
        [:document [size body]]))
 
+
+
 (def dirac-delta
   (let [p1 (tex :delta "(x)"
                 :eq 0
