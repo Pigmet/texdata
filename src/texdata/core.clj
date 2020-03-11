@@ -272,10 +272,9 @@
 
 (defcmd :document :environment :default)
 
-;; TODO : add more examples for :usepackage
-
 (register-example
- #{ [:usepackage "amsmath"]})
+ #{ [:usepackage "amsmath"]
+   [:usepackage {:opt ["left = 20mm" "right = 20mm"]} "geometry"]})
 
 ;;TODO register other commands
 
@@ -289,7 +288,7 @@
   :array, :table or :tabular.
 
   The optional kind value specifies the type of the brankets
-  to wrap the position string."
+  that wrap the position string."
   [data &{:keys [kind] :or {kind :curly}}]
   {:pre[(s/valid? ::array-spec data)
         (belong? [:curly :square] kind)]}
@@ -418,13 +417,22 @@
 
 (defcmd :item :normal [data] (item-impl data))
 
-(register-example
- :item
- #{[:item "apple"]
-   [:item {:tag "first item"} "apple"]})
-
-(defcmd-coll-default :environment
+(def ^:private itemize-type-cmds
   [:itemize :description :enumerate])
+
+(register-example
+:item
+#{[:item "apple"]
+  [:item {:tag "first item"} "apple"]})
+
+(defcmd-coll-default :environment itemize-type-cmds)
+
+(doseq [cmd itemize-type-cmds]
+  (register-example
+   cmd
+   [cmd
+    [:item "one"]
+    [:item {:tag "second item"} "two"]]))
 
 ;; other commands
 
@@ -432,27 +440,27 @@
   [:text :sqrt])
 
 (defcmd :sqrt-n :normal [[_ n & more]]
-  (format "\\sqrt[%s]{%s}" (tex n) (tex more)))
+(format "\\sqrt[%s]{%s}" (tex n) (tex more)))
 
 (register-example
- :sqrt-n
- [:sqrt-n 2 "x"])
+:sqrt-n
+[:sqrt-n 2 "x"])
 
 (s/def ::color-spec
-  (s/cat :cmd keyword?
-         :color (some-fn keyword? string?)
-         :args (s/* any?)))
+(s/cat :cmd keyword?
+       :color (some-fn keyword? string?)
+       :args (s/* any?)))
 
 (defn- color-impl [data]
-  {:pre [(s/valid? ::color-spec data)]}
-  (let [{:keys [cmd color args]} (s/conform ::color-spec data)]
-    (format "\\%s{%s}{%s}" (name cmd) (name color)(tex args) )))
+{:pre [(s/valid? ::color-spec data)]}
+(let [{:keys [cmd color args]} (s/conform ::color-spec data)]
+  (format "\\%s{%s}{%s}" (name cmd) (name color)(tex args) )))
 
 (defcmd :color :normal [data] (color-impl data))
 
 (register-example
- :color
- [:color :red "red text"])
+:color
+[:color :red "red text"])
 
 
 

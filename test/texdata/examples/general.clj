@@ -29,7 +29,6 @@
        (tex other)
        [:document [size body]]))
 
-
 (def dirac-delta
   (tex
    [:documentclass "article"]
@@ -61,6 +60,12 @@
   (compile-and-view
    "test/texdata/examples/out/test.tex"
    dirac-delta)
+
+  (compile-and-view
+   test-path
+   (view-string
+    :size :huge
+    :body (tex [:math :lim :sub ["x" :to 0] "f(x)" :eq 1])))
 
   (pdf->image
    "test/texdata/examples/out/test.pdf"
