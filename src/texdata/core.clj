@@ -214,6 +214,9 @@
 
 (defcmd :math :normal [[_ & more]] (format "\\[ %s \\]" (tex more)))
 
+(defcmd :frac :normal [[_ x y]]
+  (format "\\frac{%s}{%s}" (tex x) (tex y)))
+
 (defcmd :dol :normal [[_ & more]] (format "$ %s $" (tex more)))
 
 (defcmd-coll-default :environment
@@ -222,10 +225,12 @@
 ;; special symbol
 
 (defcmd :amp :independent "&")
-;
+                                        ;
 (defcmd :next :independent "\\\\")
 
 (defcmd :sp :independent "\\,")
+
+(defcmd :eq :independent "=")
 
 ;; preamble 
 
@@ -396,10 +401,42 @@
    :underbrace :widehat :overrightarrow :overline :overbrace
    :mathbb :mathcal :mathbf])
 
+;; itemize
+
+(s/def ::item-spec
+  (s/cat :cmd keyword?
+         :opt (s/? (s/map-of #{:tag} string?))
+         :args (s/* any?)))
+
+(defn- item-impl [data]
+  {:pre [(s/valid? ::item-spec data)]}
+  (let[{:keys [cmd opt args]} (s/conform ::item-spec data)
+       tag (get opt :tag)]
+    (cond-> (str "\\" (name cmd))
+      tag (str (format "[%s]" tag))
+      args (str (format "{%s}" (tex args))))))
+
+(defcmd :item :normal [data] (item-impl data))
+
+(register-example
+ :item
+ #{[:item "apple"]
+   [:item {:tag "first item"} "apple"]})
+
+(defcmd-coll-default :environment
+  [:itemize :description :enumerate])
+
 ;; other commands
 
 (defcmd-coll-default :normal
-  [:text])
+  [:text :sqrt])
+
+(defcmd :sqrt-n :normal [[_ n & more]]
+  (format "\\sqrt[%s]{%s}" (tex n) (tex more)))
+
+(register-example
+ :sqrt-n
+ [:sqrt-n 2 "x"])
 
 (s/def ::color-spec
   (s/cat :cmd keyword?
