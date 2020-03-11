@@ -78,6 +78,22 @@
 
 (defn tex [& args] (join " " (map data->string args)))
 
+(defn tex->> [exp & more]
+  (reduce
+   (fn [acc x]
+     (if (coll? x) (tex (concat x [acc])) (tex [x acc])))
+   (tex exp)
+   more))
+
+(defn tex-> [exp & more]
+  (reduce
+   (fn [acc x]
+     (if (coll? x) (tex (concat [acc] x)) (tex [x acc])))
+   (tex exp)
+   more))
+
+;; data->string
+
 (defmethod data->string :nil [_] "")
 
 (defmethod data->string :literal [x] (str x))
@@ -224,8 +240,8 @@
   {:pre [(s/valid? ::documentclass-spec data)]}
   (let [{:keys [cmd opt v]} (parse-documentclass-data data)]
     (cond-> (str "\\" (name cmd))
-      opt (str (format "[%s]"
-                       (if (coll? opt) (join "," opt ) opt)))
+      (seq opt) (str (format "[%s]"
+                             (if (coll? opt) (join "," opt ) opt)))
       v (str (format "{%s}" (tex v))))))
 
 (defcmd :documentclass :normal
@@ -300,5 +316,10 @@
     (register-example
      :right
      rset)))
+
+;; font size
+
+(defcmd-coll-default :environment
+  [:huge :Huge :small :normalsize :tiny])
 
 

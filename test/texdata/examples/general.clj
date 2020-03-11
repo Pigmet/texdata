@@ -30,6 +30,11 @@
        [:document [size body]]))
 
 
+(compile-and-view
+ test-path
+ (view-string  :body "yay"))
+
+
 
 (def dirac-delta
   (let [p1 (tex :delta "(x)"
