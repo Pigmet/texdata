@@ -91,7 +91,7 @@
      :decorate (apply hash-map(s/unform ::decorate-spec decor))
      :others (s/unform (s/* ::tex-spec) r)}))
 
-(defmethod data->string :decorate[data]
+(defmethod data->string :decorate [data]
   (let [{:keys [v decorate others]} (parse-decorate data)
         {:keys [sub super]} decorate]
     (cond-> (tex v)
@@ -106,34 +106,35 @@
 
 ;;(register-command :equation :environment)
 
-;; be careful about the selector -> it should be the command key,
+;; Be careful about the selector -> it should be the command key,
 ;; hence the first item of vector.
+
 (defmulti handle-env-cmd {:private true} first)
 
 (defn- decorate-env-s [cmd-s body]
-(format "\\begin{%s}%s \\end{%s}" cmd-s body cmd-s))
+  (format "\\begin{%s}%s \\end{%s}" cmd-s body cmd-s))
 
 (defmethod handle-env-cmd :default [[cmd & more]]
-(decorate-env-s (name cmd) (tex more)))
+  (decorate-env-s (name cmd) (tex more)))
 
 (defmulti handle-normal-cmd {:private true} first)
 
 (defmethod handle-normal-cmd :default
-[[cmd & more]]
-(format "\\%s{%s}" (name cmd) (tex more)))
+  [[cmd & more]]
+  (format "\\%s{%s}" (name cmd) (tex more)))
 
 (defmethod data->string :command [data]
-(if (-> data first get-command :type (= :environment))
-  (handle-env-cmd data)
-  (handle-normal-cmd data)))
+  (if (-> data first get-command :type (= :environment))
+    (handle-env-cmd data)
+    (handle-normal-cmd data)))
 
 (s/def ::defcmd-spec
-(s/cat :id keyword?
-       :type #{:normal :environment :independent}
-       :body (s/+ any?)))
+  (s/cat :id keyword?
+         :type #{:normal :environment :independent}
+         :body (s/+ any?)))
 
 (defmacro defcmd
-"Registers a new command.
+  "Registers a new command.
 
   Example:
 
@@ -146,38 +147,40 @@
   Define independent command:
   (defcmd :amp :independent \"&\")
   "
-[id type & body]
-(let [input (list* id type body)
-      valid? (s/valid? ::defcmd-spec input)
-      imple-fns {:environment `handle-env-cmd
-                 :normal `handle-normal-cmd}
-      default? (-> body first (= :default))
-      ind? (= type :independent)]
-  (if-not valid? (throw
-                  (ex-info "invalid input for defcmd"
-                           {:input input}))
-          (cond
-            ind? `(register-command ~id ~type ~(first body))
-            default? `(register-command ~id ~type)
-            :else `(do
-                     (register-command ~id ~type)
-                     (defmethod ~(imple-fns type) ~id ~@body))))))
+  [id type & body]
+  (let [input (list* id type body)
+        valid? (s/valid? ::defcmd-spec input)
+        imple-fns {:environment `handle-env-cmd
+                   :normal `handle-normal-cmd}
+        default? (-> body first (= :default))
+        ind? (= type :independent)]
+    (if-not valid? (throw
+                    (ex-info "invalid input for defcmd"
+                             {:input input}))
+            (cond
+              ind? `(register-command ~id ~type ~(first body))
+              default? `(register-command ~id ~type)
+              :else `(do
+                       (register-command ~id ~type)
+                       (defmethod ~(imple-fns type) ~id ~@body))))))
 
 (defn- defcmd-coll-default
-"Takes command type and collection of command keys.
+  "Takes command type and collection of command keys.
   Registers them (the commands) via default implementation."
-[type coll]
-(eval  `(do ~@(map
-               (fn [id] `(defcmd ~id ~type :default))
-               coll))))
+  [type coll]
+  (eval  `(do ~@(map
+                 (fn [id] `(defcmd ~id ~type :default))
+                 coll))))
 
 (def ^:private example-repository 
-(atom {}))
+  (atom {}))
 
 (defn get-all-examples [] @example-repository)
 
 (defn register-example [& kvs]
-  (doseq [[k v] kvs] (swap! example-repository assoc k v)))
+  (doseq [[k v] (partition 2 kvs)]
+    (swap! example-repository assoc k v))
+  @example-repository)
 
 ;; math expressions
 
@@ -197,6 +200,35 @@
 (defcmd :sp :independent "\\,")
 
 ;; preamble 
+
+(s/def ::standard-opt-spec
+  (s/map-of #{:opt} (s/or :one string? :more (s/coll-of string?))))
+
+(s/def ::documentclass-spec
+  (s/cat :cmd keyword?
+         :opt (s/? ::standard-opt-spec)
+         :v string?))
+
+(defn- parse-documentclass-data [data]
+  (let[{:keys [cmd opt v]} (s/conform ::documentclass-spec data)
+       opt (when opt(s/unform ::standard-opt-spec opt))]
+    (merge  {:cmd cmd :v v} opt)))
+
+(defn- documentclass-impl [data]
+  {:pre [(s/valid? ::documentclass-spec data)]}
+  (let [{:keys [cmd opt v]} (parse-documentclass-data data)]
+    (cond-> (str "\\" (name cmd))
+      opt (str (format "[%s]"
+                       (if (coll? opt) (join "," opt ) opt)))
+      v (str (format "{%s}" (tex v))))))
+
+(defcmd :documentclass :normal [data] (documentclass-impl data))
+
+(register-example
+ :documentclass
+ #{[:documentclass "article"]
+   [:documentclass {:opt "landscape"} "article"]
+   [:documentclass {:opt ["12pt" "landscape"]} "article"]})
 
 ;;TODO register other commands 
 
