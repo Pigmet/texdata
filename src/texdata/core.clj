@@ -421,9 +421,9 @@
   [:itemize :description :enumerate])
 
 (register-example
-:item
-#{[:item "apple"]
-  [:item {:tag "first item"} "apple"]})
+ :item
+ #{[:item "apple"]
+   [:item {:tag "first item"} "apple"]})
 
 (defcmd-coll-default :environment itemize-type-cmds)
 
@@ -440,27 +440,27 @@
   [:text :sqrt])
 
 (defcmd :sqrt-n :normal [[_ n & more]]
-(format "\\sqrt[%s]{%s}" (tex n) (tex more)))
+  (format "\\sqrt[%s]{%s}" (tex n) (tex more)))
 
 (register-example
-:sqrt-n
-[:sqrt-n 2 "x"])
+ :sqrt-n
+ [:sqrt-n 2 "x"])
 
 (s/def ::color-spec
-(s/cat :cmd keyword?
-       :color (some-fn keyword? string?)
-       :args (s/* any?)))
+  (s/cat :cmd keyword?
+         :color (some-fn keyword? string?)
+         :args (s/* any?)))
 
 (defn- color-impl [data]
-{:pre [(s/valid? ::color-spec data)]}
-(let [{:keys [cmd color args]} (s/conform ::color-spec data)]
-  (format "\\%s{%s}{%s}" (name cmd) (name color)(tex args) )))
+  {:pre [(s/valid? ::color-spec data)]}
+  (let [{:keys [cmd color args]} (s/conform ::color-spec data)]
+    (format "\\%s{%s}{%s}" (name cmd) (name color)(tex args) )))
 
 (defcmd :color :normal [data] (color-impl data))
 
 (register-example
-:color
-[:color :red "red text"])
+ :color
+ [:color :red "red text"])
 
 
 
