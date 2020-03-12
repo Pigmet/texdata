@@ -29,6 +29,8 @@
        (tex other)
        [:document [size body]]))
 
+
+
 (def dirac-delta
   (tex
    [:documentclass "article"]

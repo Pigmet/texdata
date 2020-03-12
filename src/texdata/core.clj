@@ -330,6 +330,7 @@
 
 (defcmd :right :normal [data] (left-rght-impl data))
 
+;; TODO: improve this
 (let [ks (keys parens-table)
       lset (set (for [k ks] [:left k]))
       rset (set (for [k ks] [:right k]))]
