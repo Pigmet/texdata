@@ -4,6 +4,9 @@
             [texdata.compile
              :refer [compile-and-view* update-compile* compile-tex* ]]))
 
+;; TODO: enable other compile options, produce dvi files
+;; MEMO: is defcmd worth the trouble?
+
 (defn compile-and-view
   "Takes path to a TeX file and string.
   Writes the string in the file and TeX compiles it via the command 'pdflatex',
@@ -33,7 +36,7 @@
 
 (def ^:private command-repository (atom{}))
 
-(defn all-commands [] @command-repository)
+(defn get-all-commands [] @command-repository)
 
 (defn- register-impl [the-atom coll]
   (doseq [[k v] (partition 2 coll)]
@@ -135,7 +138,7 @@
 ;; Be careful about the selector -> it should be the command key,
 ;; hence the first item of vector.
 
-(defmulti handle-env-cmd {:private true} first)
+(defmulti handle-env-cmd  first)
 
 (defn- decorate-env-s [cmd-s body]
   (format "\\begin{%s}%s \\end{%s}" cmd-s body cmd-s))
@@ -143,7 +146,7 @@
 (defmethod handle-env-cmd :default [[cmd & more]]
   (decorate-env-s (name cmd) (tex more)))
 
-(defmulti handle-normal-cmd {:private true} first)
+(defmulti handle-normal-cmd  first)
 
 (defmethod handle-normal-cmd :default
   [[cmd & more]]
@@ -341,6 +344,11 @@
     (register-example
      :right
      rset)))
+
+;; matrix
+
+(defcmd-coll-default :environment
+  [:matrix :pmatrix :vmatrix :Vmatix :bmatrix])
 
 ;; font size
 

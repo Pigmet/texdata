@@ -44,6 +44,7 @@ This library offers a few functions that convert Clojure data to string recogniz
 (tex [:equation [:frac 1 2]])
 ;; => "\\begin{equation} \\frac{1}{2} \\end{equation}"
 ```
+
 ### How tex treats data
 
 #### string and number

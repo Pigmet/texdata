@@ -1,7 +1,9 @@
 (ns texdata.example.general
-  (:require [texdata.core :refer [tex tex-> tex->> compile-and-view]]
+  (:require [texdata.core :refer :all]
             [texdata.convert :refer [pdf->image]]
             [clojure.string :refer [join]]))
+
+
 
 (def standard-packages
   {:amsmath []
@@ -29,8 +31,6 @@
        (tex other)
        [:document [size body]]))
 
-
-
 (def dirac-delta
   (tex
    [:documentclass "article"]
@@ -38,23 +38,22 @@
    [:usepackage "amssymb"]
    [:usepackage {:opt ["left = 20mm" "right = 20mm"] } "geometry"]
    [:document
-    [:huge
-     ["The Dirac delta function" [:dol :delta "(x)"] "satisfies:"
-      [:enumerate
-       [:item
-        [:math :delta "(x)" :eq 0 :sp
-         [:text "for all" [:dol "x" :neq 0]]]]
-       [:item
-        [:math :int :sub ["-" :infty] :super :infty
-         :delta "(x)dx"
-         :eq 1]]]
-      "From these properties, it follows that for all function"
-      [:dol "f,"] 
-      [:math
-       :int :sub ["-" :infty] :super :infty
-       :delta "(x)" "f(x)" "dx"
-       :eq
-       "f(0)."]]]]))
+    ["The Dirac delta function" [:dol :delta "(x)"] "satisfies:"
+     [:enumerate
+      [:item
+       [:math :delta "(x)" :eq 0 :sp
+        [:text "for all" [:dol "x" :neq 0]]]]
+      [:item
+       [:math :int :sub ["-" :infty] :super :infty
+        :delta "(x)dx"
+        :eq 1]]]
+     "From these properties, it follows that for all function"
+     [:dol "f,"] 
+     [:math
+      :int :sub ["-" :infty] :super :infty
+      :delta "(x)" "f(x)" "dx"
+      :eq
+      "f(0)."]]]))
 
 
 (comment
@@ -63,15 +62,8 @@
    "test/texdata/examples/out/test.tex"
    dirac-delta)
 
-  (compile-and-view
-   test-path
-   (view-string
-    :size :huge
-    :body (tex [:math :lim :sub ["x" :to 0] "f(x)" :eq 1])))
-
   (pdf->image
    "test/texdata/examples/out/test.pdf"
    "test/texdata/examples/out/test.png")
 
   )
-
