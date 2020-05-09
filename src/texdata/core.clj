@@ -34,6 +34,9 @@
   ([k type ex]
    (swap! commands assoc k {:type type :example ex})))
 
+(defn add-example! [command-key & examples]
+  (swap! commands update-in [command-key :example] concat examples))
+
 (defn example
   "Returns example data for this command."
   [k]
