@@ -1,9 +1,9 @@
 (ns texdata.core
   (:require [clojure.spec.alpha :as s]
-            [clojure.string :refer [join trim]]))
+            [clojure.string :refer [join trim]]
+            [expound.alpha :as expound]))
 
-;; TODO: enable other compile options, produce dvi files
-;; MEMO: is defcmd worth the trouble?
+;; TODO: register  commands
 
 ;;;;;;;;;;;;;;;;
 ;; helper fns ;;
@@ -30,8 +30,8 @@
 (def commands (atom {}))
 
 (defn- register-cmd!
-  ([type k] (register-cmd! type k nil))
-  ([type k ex]
+  ([k type] (register-cmd! k type nil))
+  ([k type ex]
    (swap! commands assoc k {:type type :example ex})))
 
 (defn example
@@ -63,11 +63,39 @@
 
 (defmulti environment-command first)
 
+(defmethod environment-command :default [[k & args]]
+  (format "\\begin{%s} %s \\end{%s}"
+          (name k)
+          (join " " (map data->string args))
+          (name k)))
+
 (defmulti normal-command first)
 
-(defmethod data->string :normal [data] (normal-command data))
+(defmethod data->string :normal [data]
+  (normal-command data))
 
-(defmethod data->string :environment [data] (environment-command data))
+(defmethod data->string :environment [data]
+  (environment-command data))
+
+;; impl
+
+(defn- check-data [spec data]
+  (if (s/valid? spec data )
+    data
+    (throw (Exception.
+            (format "can't convert data:\n\n %s\n\n%s" data
+                    (expound/expound-str spec data))))))
+
+(s/def ::defcmd-spec
+  (s/cat :type command-types
+         :args vector?
+         :body (s/+ any?)))
+
+(defmacro defcmd [k type args & body]
+  (let [impl-fn {:normal `normal-command
+                 :environment `environment-command}]
+    `(do (register-cmd!  ~k ~type)
+         (defmethod ~(impl-fn type) ~k ~args ~@body))))
 
 ;; impl
 
@@ -78,22 +106,33 @@
         (s/conformer (fn [{cl :class {v :v} :opt}]
                        {:class cl :opt v}))))
 
-(s/conform ::documentclass-spec
-           [:documentclass "a" :opt [1 2 3] 9])
-
-(defmethod normal-command :documentclass
+(defcmd :documentclass :normal 
   [data]
+  {:pre [(check-data ::documentclass-spec data)]}
   (let [{cl :class opt :opt} (s/conform ::documentclass-spec data)]
-    (format "\\documentclass[%s]{%s}" (join "," opt) cl  )))
+    (format "\\documentclass[%s]{%s}" (join "," opt) cl)))
 
-(register-cmd! :normal
-               :documentclass
-               [[:documentclass "article"]
-                [:documentclass "article" :opt ["letterpaper" "12pt"]]])
+;; when using the default implementation, it suffices just to register command.
+(register-cmd! :document :environment)
 
-(data->string [:documentclass "article" :opt ["letterpaper" "12pt"]])
 
-(example :documentclass)
+
+
+
+(comment
+
+  (register-cmd! :normal
+                 :documentclass
+                 [[:documentclass "article"]
+                  [:documentclass "article" :opt ["letterpaper" "12pt"]]])
+
+  (data->string [:documentclass "article"
+                 :opt ["letterpaper" "12pt"]
+                 ])
+
+  (example :documentclass)
+
+  )
 
 
 
