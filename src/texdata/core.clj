@@ -3,7 +3,9 @@
             [clojure.string :refer [join trim]]
             [expound.alpha :as expound]))
 
-;; TODO: register  commands
+;; example for each command and better error message via expound. 
+
+;; TODO: register commands
 
 ;;;;;;;;;;;;;;;;
 ;; helper fns ;;
@@ -29,7 +31,7 @@
 
 (def commands (atom {}))
 
-(defn- register-cmd!
+(defn register-cmd!
   ([k type] (register-cmd! k type nil))
   ([k type ex]
    (swap! commands assoc k {:type type :example ex})))
@@ -40,7 +42,9 @@
 (defn example
   "Returns example data for this command."
   [k]
-  (get-in @commands [k :example ] ))
+  (get-in @commands [k :example] ))
+
+;; spec
 
 (s/def ::tex-spec
   (s/or :literal (some-fn string? number?)
@@ -53,9 +57,6 @@
   [x]
   (when (s/valid? ::tex-spec x)
     (key (s/conform ::tex-spec x))))
-
-;; example
-
 ;; main fn
 
 (defmulti data->string tex-data-type)
@@ -89,16 +90,44 @@
             (format "can't convert data:\n\n %s\n\n%s" data
                     (expound/expound-str spec data))))))
 
-(s/def ::defcmd-spec
-  (s/cat :type command-types
-         :args vector?
-         :body (s/+ any?)))
+;; defcmd 
 
-(defmacro defcmd [k type args & body]
-  (let [impl-fn {:normal `normal-command
-                 :environment `environment-command}]
-    `(do (register-cmd!  ~k ~type)
-         (defmethod ~(impl-fn type) ~k ~args ~@body))))
+(s/def ::defcmd-spec
+  (s/cat
+   :tag keyword?
+   :type command-types
+   :definition (s/? (s/cat :args vector? :body (s/+ any?)))))
+
+(s/conform ::defcmd-spec '(:documentclass :normal [a b] x))
+;; => {:tag :documentclass,
+;;     :type :normal,
+;;     :definition {:args [a b], :body [x]}}
+
+(defmacro defcmd
+  "Registers a new command.
+  Example:
+
+  (defcmd :documentclass :normal [data] ...)
+
+  when using default implementation:
+
+  (defcmd :equation :environment)."
+  [& args]
+  {:pre [(s/valid? ::defcmd-spec args)]}
+  (let [data (s/conform ::defcmd-spec args)
+
+        {tag :tag cmd-type :type
+         {args :args body :body :as impl} :definition} data
+
+        impl-fn        {:normal `normal-command
+                        :environment `environment-command}
+
+        register-part `(register-cmd! ~tag ~cmd-type)
+
+        imple-part `(defmethod ~tag ~cmd-type ~args ~@body)]
+    (if impl
+      `(do ~register-part ~imple-part)
+      `(do ~register-part))))
 
 ;; impl
 
@@ -110,33 +139,10 @@
                        {:class cl :opt v}))))
 
 (defcmd :documentclass :normal 
-  [data]
-  {:pre [(check-data ::documentclass-spec data)]}
-  (let [{cl :class opt :opt} (s/conform ::documentclass-spec data)]
-    (format "\\documentclass[%s]{%s}" (join "," opt) cl)))
+[data]
+{:pre [(check-data ::documentclass-spec data)]}
+(let [{cl :class opt :opt} (s/conform ::documentclass-spec data)]
+  (format "\\documentclass[%s]{%s}" (join "," opt) cl)))
 
 ;; when using the default implementation, it suffices just to register command.
 (register-cmd! :document :environment)
-
-
-
-
-
-(comment
-
-  (register-cmd! :normal
-                 :documentclass
-                 [[:documentclass "article"]
-                  [:documentclass "article" :opt ["letterpaper" "12pt"]]])
-
-  (data->string [:documentclass "article"
-                 :opt ["letterpaper" "12pt"]
-                 ])
-
-  (example :documentclass)
-
-  )
-
-
-
-
