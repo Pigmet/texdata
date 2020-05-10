@@ -23,6 +23,18 @@
       (.listFiles f)
       (-> parent file (.listFiles) ))))
 
+(defn compile-tex [path &{:keys [cmd] :or {cmd "pdflatex"}}]
+  (let [f (file path)
+        {parent :parent s :name} (file-data f)
+        {:keys [exit out]}    (with-sh-dir parent
+                                (sh cmd s))]
+    (if-not (zero? exit)
+      (throw (Exception. out))
+      "success!")))
+
+(compile-tex (str temp-file))
+
+
 (comment
   (->> temp-file
        get-siblings
