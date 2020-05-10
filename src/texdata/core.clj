@@ -61,6 +61,8 @@
 
 (defmulti data->string tex-data-type)
 
+(defn tex[& args] (join " " (map data->string args)))
+
 (defmethod data->string :literal [x] (str x))
 
 (defmethod data->string :single [x] (str "\\" (name x)))
@@ -104,7 +106,9 @@
 ;;     :definition {:args [a b], :body [x]}}
 
 (defmacro defcmd
-  "Registers a new command.
+  "args => cmd-key cmd-type (args body)?
+
+  Registers a new command.
   Example:
 
   (defcmd :documentclass :normal [data] ...)
@@ -124,7 +128,7 @@
 
         register-part `(register-cmd! ~tag ~cmd-type)
 
-        imple-part `(defmethod ~tag ~cmd-type ~args ~@body)]
+        imple-part `(defmethod ~(impl-fn cmd-type) ~tag ~args ~@body)]
     (if impl
       `(do ~register-part ~imple-part)
       `(do ~register-part))))
@@ -139,10 +143,8 @@
                        {:class cl :opt v}))))
 
 (defcmd :documentclass :normal 
-[data]
-{:pre [(check-data ::documentclass-spec data)]}
-(let [{cl :class opt :opt} (s/conform ::documentclass-spec data)]
-  (format "\\documentclass[%s]{%s}" (join "," opt) cl)))
+  [data]
+  {:pre [(check-data ::documentclass-spec data)]}
+  (let [{cl :class opt :opt} (s/conform ::documentclass-spec data)]
+    (format "\\documentclass[%s]{%s}" (join "," opt) cl)))
 
-;; when using the default implementation, it suffices just to register command.
-(register-cmd! :document :environment)
