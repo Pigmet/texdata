@@ -6,13 +6,18 @@
 (def temp-file (file "resources/temp.tex"))
 
 (defn- file-data [f]
-  {:absolute-path (.getAbsolutePath f)
-   :canonical-path (.getCanonicalPath f)
-   :parent (.getParent f)
-   :directory? (.isDirectory f)
-   :name (.getName f)})
+  (let [f (if (string? f) (file f) f)]
+    {:absolute-path (.getAbsolutePath f)
+     :canonical-path (.getCanonicalPath f)
+     :parent (.getParent f)
+     :directory? (.isDirectory f)
+     :name (.getName f)
+     :exists? (.exists f)}))
 
-(defn- get-siblings [f]
+(defn- get-siblings
+  "Returns coll of files residing in the same directory as f.
+  If f is a directory, returns the files therein."
+  [f]
   (let [{:keys [directory? parent]} (file-data f)]
     (if directory?
       (.listFiles f)
