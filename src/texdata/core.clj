@@ -58,13 +58,14 @@
   [x]
   (when (s/valid? ::tex-spec x)
     (key (s/conform ::tex-spec x))))
+
 ;; main fn
 
 (defmulti data->string tex-data-type)
 
 (defmethod data->string nil [data]
   (throw (Exception.
-          (format"don't know how to handle %s" data))))
+          (format "data->string does not know how to handle %s" data))))
 
 (defn tex[& args] (join " " (map data->string args)))
 
@@ -107,6 +108,8 @@
    :tag keyword?
    :type command-types
    :definition (s/? (s/cat :args vector? :body (s/+ any?)))))
+
+;; TODO: handle single command. 
 
 (defmacro defcmd
   "args => cmd-key cmd-type (args body)?
