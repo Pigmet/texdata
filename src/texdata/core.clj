@@ -1,7 +1,8 @@
 (ns texdata.core
   (:require [clojure.spec.alpha :as s]
             [clojure.string :refer [join trim]]
-            [expound.alpha :as expound]))
+            [expound.alpha :as expound]
+            [texdata.compile :refer [compile-tex open-file]]))
 
 ;; example for each command and better error message via expound. 
 
@@ -61,6 +62,10 @@
 
 (defmulti data->string tex-data-type)
 
+(defmethod data->string nil [data]
+  (throw (Exception.
+          (format"don't know how to handle %s" data))))
+
 (defn tex[& args] (join " " (map data->string args)))
 
 (defmethod data->string :literal [x] (str x))
@@ -76,6 +81,9 @@
           (name k)))
 
 (defmulti normal-command first)
+
+(defmethod normal-command :default [[tag & args]]
+  (format "\\%s{%s}" (name tag) (join " " (map data->string args))))
 
 (defmethod data->string :normal [data]
   (normal-command data))
@@ -99,11 +107,6 @@
    :tag keyword?
    :type command-types
    :definition (s/? (s/cat :args vector? :body (s/+ any?)))))
-
-(s/conform ::defcmd-spec '(:documentclass :normal [a b] x))
-;; => {:tag :documentclass,
-;;     :type :normal,
-;;     :definition {:args [a b], :body [x]}}
 
 (defmacro defcmd
   "args => cmd-key cmd-type (args body)?
@@ -133,6 +136,12 @@
       `(do ~register-part ~imple-part)
       `(do ~register-part))))
 
+(defn- def-environment-default [k]
+  (eval `(defcmd ~k :environment)))
+
+(defn- def-nornaml-default [k]
+  (eval `(defcmd ~k :normal)))
+
 ;; impl
 
 (s/def ::documentclass-spec
@@ -148,3 +157,61 @@
   (let [{cl :class opt :opt} (s/conform ::documentclass-spec data)]
     (format "\\documentclass[%s]{%s}" (join "," opt) cl)))
 
+(->> [:document :environment :equation :equation* :align :align*
+      :Huge :huge :small :normalsize]
+     (map #(def-environment-default %))
+     doall)
+
+;; basic math
+
+(defcmd :lower :normal
+  [[_ x]]
+  (format "_{%s}" (tex x)))
+
+(defcmd :upper :normal
+  [[_ x]]
+  (format "^{%s}" (tex x)))
+
+(defcmd :math :normal
+  [[_ & args]]
+  (format "\\[ %s \\]" (apply tex args)))
+
+(defcmd :frac :normal
+  [[_ x y]]
+  (format "\\frac{%s}{%s}" (tex x) (tex y)))
+
+(s/def ::int-spec
+  (s/& (s/cat :tag keyword?
+              :lower (s/? (s/cat :k #{:lower} :v any?))
+              :upper (s/? (s/cat :k #{:upper} :v any?))
+              :args (s/* any?))
+       (s/conformer (fn [{{lower :v} :lower {upper :v} :upper args :args}]
+                      {:lower lower :upper upper :args args}))))
+
+(defcmd :int :normal
+  [data]
+  {:pre[(check-data ::int-spec data)]}
+  (let [{:keys [lower upper args]} (s/conform ::int-spec data)]
+    (cond-> "\\int"
+      lower (str (tex [:lower lower]))
+      upper (str (tex [:upper upper]))
+      (seq args) (str " " (apply tex args)))))
+
+(add-example! :int
+              [:int "f(x)dx"]
+              [:int :lower 1 :upper 2 "f(x)dx"])
+
+(comment
+
+  (do
+    (def s
+      (tex [:documentclass "article"]
+           [:document
+            [:Huge
+             [:equation [:int :lower 1 :upper [:frac 2 3] "f(x)"]]]]))
+
+    (spit  "resources/temp.tex" s)
+    (compile-tex temp-file)
+    (open-file "resources/temp.pdf"))
+
+  )

@@ -3,9 +3,7 @@
             [clojure.java.shell :refer [sh with-sh-dir]])
   (:import (java.nio.file Files Paths)))
 
-(def temp-file (file "resources/temp.tex"))
-
-(defn- file-data [f]
+(defn- file-data-1 [f]
   (let [f (if (string? f) (file f) f)]
     {:absolute-path (.getAbsolutePath f)
      :canonical-path (.getCanonicalPath f)
@@ -18,10 +16,14 @@
   "Returns coll of files residing in the same directory as f.
   If f is a directory, returns the files therein."
   [f]
-  (let [{:keys [directory? parent]} (file-data f)]
+  (let [{:keys [directory? parent]} (file-data-1 f)]
     (if directory?
       (.listFiles f)
       (-> parent file (.listFiles) ))))
+
+(defn file-data [f]
+  (merge (file-data-1 f)
+         {:siblings (->> f get-siblings (map str))}))
 
 (defn compile-tex [path &{:keys [cmd] :or {cmd "pdflatex"}}]
   (let [f (file path)
@@ -32,14 +34,6 @@
       (throw (Exception. out))
       "success!")))
 
-(compile-tex (str temp-file))
-
-
-(comment
-  (->> temp-file
-       get-siblings
-       (map file-data)
-       (map :name)))
-
-
+(defn open-file [path]
+  (sh "open" path))
 
