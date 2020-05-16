@@ -4,6 +4,7 @@
             [expound.alpha :as expound]
             [texdata.compile :refer [compile-tex open-file]]))
 
+
 ;; example for each command and better error message via expound. 
 
 ;; TODO: register commands
@@ -226,8 +227,6 @@
                            :pos string?
                            :body (s/* any?)))
 
-(s/conform ::table-spec [:table "aa" 1])
-
 (defcmd :table :environment [data]
   {:pre [(s/valid? ::table-spec data)]}
   (let [{:keys [cmd pos body]} (s/conform ::table-spec data)]
@@ -240,29 +239,44 @@
     (env-string (name cmd)
                 (format "{%s}%s" pos  (apply tex body)))))
 
+(def-single-command-map {:next "\\\\"
+                         :amp "&"})
+
+(add-example! :table [:table "htb"
+                      [:tabular "cc"
+                       1 :amp 2 :next
+                       3 :amp 4]])
+
+(add-example! :tabular [:table "htb"
+                        [:tabular "cc"
+                         1 :amp 2 :next
+                         3 :amp 4]])
+
+(def-environment-default :center)
+
+(def-nornaml-default :caption)
+
+(add-example! :caption  [:table "htb"
+                         [:caption "caption"]
+                         [:tabular "cc"
+                          :hline :next
+                          1 :amp 2]])
 
 
+;; demo 
 
+(defn- demo [& args]
+  (let [f "resources/temp.tex"
+        s (tex [:documentclass "article"]
+               [:document
+                [:Huge (apply tex args)]])]
+    (spit f s)
+    (compile-tex f)
+    (open-file "resources/temp.pdf")))
 
-
-
-
-
-
-(comment
-
-  (do
-    (def s
-      (tex [:documentclass "article"]
-           [:document
-            [:Huge
-             [:equation
-              [:int :lower 1 :upper [:frac 2 3]
-               (tex "f" [:lower 0] "(x)")
-               [:upper [:frac 4 3]] "dx"]]]]))
-
-    (spit  "resources/temp.tex" s)
-    (compile-tex "resources/temp.tex" )
-    (open-file "resources/temp.pdf"))
-
-  )
+(demo
+[:table "htb"
+ [:caption "caption"]
+ [:tabular "cc"
+  :hline :next
+  1 :amp 2]])
