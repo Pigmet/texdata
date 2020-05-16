@@ -70,6 +70,21 @@
 
 (defn tex[& args] (join " " (map data->string args)))
 
+
+(defn tex->> [exp & more]
+  (reduce
+   (fn [acc x]
+     (if (coll? x) (tex (concat x [acc])) (tex [x acc])))
+   (tex exp)
+   more))
+
+(defn tex-> [exp & more]
+  (reduce
+   (fn [acc x]
+     (if (coll? x) (tex (concat [acc] x)) (tex [x acc])))
+   (tex exp)
+   more))
+
 (defmethod data->string :literal [x] (str x))
 
 (defmulti environment-command first)
@@ -156,11 +171,11 @@
       `(do ~register-part ~imple-part)
       `(do ~register-part))))
 
-(defn- def-environment-default [k]
-  (eval `(defcmd ~k :environment)))
+(defn- def-environment-default [& ks]
+  (dorun (map (fn [k]  (eval `(defcmd ~k :environment))) ks))) 
 
-(defn- def-nornaml-default [k]
-  (eval `(defcmd ~k :normal)))
+(defn- def-nornaml-default [& ks]
+  (dorun (map (fn [k]  (eval `(defcmd ~k :normal))) ks))) 
 
 ;; impl
 
@@ -177,10 +192,11 @@
   (let [{cl :class opt :opt} (s/conform ::documentclass-spec data)]
     (format "\\documentclass[%s]{%s}" (join "," opt) cl)))
 
-(->> [:document :environment :equation :equation* :align :align*
-      :Huge :huge :small :normalsize]
-     (map #(def-environment-default %))
-     doall)
+(def-environment-default :document :environment
+  :equation :equation* :align :align*
+  :Huge :huge :small :normalsize)
+
+(def-nornaml-default :usepackage)
 
 ;; basic math
 
@@ -221,6 +237,9 @@
               [:int "f(x)dx"]
               [:int :lower 1 :upper 2 "f(x)dx"])
 
+(def-single-command-map
+  {:eq "="})
+
 ;; table
 
 (s/def ::table-spec (s/cat :cmd keyword?
@@ -239,6 +258,12 @@
     (env-string (name cmd)
                 (format "{%s}%s" pos  (apply tex body)))))
 
+(defcmd :array :environment [data]
+  {:pre [(s/valid? ::table-spec data)]}
+  (let [{:keys [cmd pos body]} (s/conform ::table-spec data)]
+    (env-string (name cmd)
+                (format "{%s}%s" pos  (apply tex body)))))
+
 (def-single-command-map {:next "\\\\"
                          :amp "&"})
 
@@ -252,31 +277,32 @@
                          1 :amp 2 :next
                          3 :amp 4]])
 
-(def-environment-default :center)
-
-(def-nornaml-default :caption)
-
-(add-example! :caption  [:table "htb"
-                         [:caption "caption"]
-                         [:tabular "cc"
-                          :hline :next
-                          1 :amp 2]])
-
+(add-example! :array [:array "l" 1 :next 2])
 
 ;; demo 
 
 (defn- demo [& args]
   (let [f "resources/temp.tex"
         s (tex [:documentclass "article"]
+               [:usepackage "amsmath"]
+               [:usepackage "amssymb"]
                [:document
                 [:Huge (apply tex args)]])]
     (spit f s)
     (compile-tex f)
     (open-file "resources/temp.pdf")))
 
-(demo
-[:table "htb"
- [:caption "caption"]
- [:tabular "cc"
-  :hline :next
-  1 :amp 2]])
+       (comment
+
+         (demo
+          (tex->>
+           (tex [:caption "my table"]
+                [:tabular "cc"
+                 1 :amp 2 :next
+                 :hline
+                 3 :amp 4])
+           :center
+           :Huge
+           [:table "htb"]))
+
+         )
