@@ -211,10 +211,13 @@
       (tex [:documentclass "article"]
            [:document
             [:Huge
-             [:equation [:int :lower 1 :upper [:frac 2 3] "f(x)"]]]]))
+             [:equation
+              [:int :lower 1 :upper [:frac 2 3]
+               (tex "f" [:lower 0] "(x)")
+               [:upper [:frac 4 3]] "dx"]]]]))
 
     (spit  "resources/temp.tex" s)
-    (compile-tex temp-file)
+    (compile-tex "resources/temp.tex" )
     (open-file "resources/temp.pdf"))
 
   )
