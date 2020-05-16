@@ -279,6 +279,13 @@
 
 (add-example! :array [:array "l" 1 :next 2])
 
+;; left and right
+
+(def-single-command-map {:left-curly "\\{"
+                         :right-curly "\\}"
+                         :left-box "["
+                         :right-box "]"})
+
 ;; demo 
 
 (defn- demo [& args]
@@ -291,18 +298,3 @@
     (spit f s)
     (compile-tex f)
     (open-file "resources/temp.pdf")))
-
-       (comment
-
-         (demo
-          (tex->>
-           (tex [:caption "my table"]
-                [:tabular "cc"
-                 1 :amp 2 :next
-                 :hline
-                 3 :amp 4])
-           :center
-           :Huge
-           [:table "htb"]))
-
-         )
