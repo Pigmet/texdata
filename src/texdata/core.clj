@@ -71,8 +71,6 @@
 
 (defmethod data->string :literal [x] (str x))
 
-(defmethod data->string :single [x] (str "\\" (name x)))
-
 (defmulti environment-command first)
 
 (defmethod environment-command :default [[k & args]]
@@ -86,11 +84,29 @@
 (defmethod normal-command :default [[tag & args]]
   (format "\\%s{%s}" (name tag) (join " " (map data->string args))))
 
+(defmulti single-command identity)
+
+(defmethod single-command :default [k] (str "\\" (name k)))
+
 (defmethod data->string :normal [data]
   (normal-command data))
 
 (defmethod data->string :environment [data]
   (environment-command data))
+
+(defmethod data->string :single [data]
+  (single-command data))
+
+(defmethod single-command :next [_] "\\\\")
+
+(defn def-single-command-map
+  "Takes map of single-command-key to string.
+  Registers them as single commands."
+  [m]
+  (dorun
+   (map (fn [[k v]]
+          (eval `(defmethod single-command ~k [data#] ~v)))
+        m)))
 
 ;; impl
 
@@ -203,6 +219,35 @@
 (add-example! :int
               [:int "f(x)dx"]
               [:int :lower 1 :upper 2 "f(x)dx"])
+
+;; table
+
+(s/def ::table-spec (s/cat :cmd keyword?
+                           :pos string?
+                           :body (s/* any?)))
+
+(s/conform ::table-spec [:table "aa" 1])
+
+(defcmd :table :environment [data]
+  {:pre [(s/valid? ::table-spec data)]}
+  (let [{:keys [cmd pos body]} (s/conform ::table-spec data)]
+    (env-string (name cmd)
+                (format "[%s]%s" pos  (apply tex body)))))
+
+(defcmd :tabular :environment [data]
+  {:pre [(s/valid? ::table-spec data)]}
+  (let [{:keys [cmd pos body]} (s/conform ::table-spec data)]
+    (env-string (name cmd)
+                (format "{%s}%s" pos  (apply tex body)))))
+
+
+
+
+
+
+
+
+
 
 (comment
 
