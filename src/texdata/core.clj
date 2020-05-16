@@ -4,11 +4,6 @@
             [expound.alpha :as expound]
             [texdata.compile :refer [compile-tex open-file]]))
 
-(def temp-file "/Users/naka/Documents/work/clojure/lib/texdata/resources/temp.tex")
-
-(def temp-pdf-file
-  "/Users/naka/Documents/work/clojure/lib/texdata/resources/temp.pdf")
-
 ;; example for each command and better error message via expound. 
 
 ;; TODO: register commands
@@ -294,8 +289,9 @@
 
 ;; sections chapters
 
-(->> [:title :author :date :section :part :chapter :subsection
-      :subsubsection :paragraph :subparagraph]
+;; TODO : add :*section etc 
+
+(->> [:title :author :date :part :*part :chapter :*chapter :section :*section :subsection :*subsection :subsubsection :*subsubsection :paragraph :*paragraph :subparagraph :*subparagraph ]
      (map #(def-nornaml-default %))
      dorun)
 
@@ -362,6 +358,11 @@
 
 ;; demo 
 
+(def temp-file "/Users/naka/Documents/work/clojure/lib/texdata/resources/temp.tex")
+
+(def temp-pdf-file
+  "/Users/naka/Documents/work/clojure/lib/texdata/resources/temp.pdf")
+
 (defn- demo [& args]
   (let [f "resources/temp.tex"
         s (tex [:documentclass "article"]
@@ -373,7 +374,3 @@
     (spit f s)
     (compile-tex f)
     (open-file "resources/temp.pdf")))
-
-
-
-
