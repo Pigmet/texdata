@@ -38,7 +38,11 @@
   ([k type ex]
    (swap! commands assoc k {:type type :example ex})))
 
-(defn add-example! [command-key & examples]
+(defn add-example!
+  "examples -> coll of tex data
+
+  Registers examples for this command."
+  [command-key & examples]
   (swap! commands update-in [command-key :example] concat examples))
 
 (defn example
@@ -286,6 +290,18 @@
                          :left-box "["
                          :right-box "]"})
 
+;; matrix
+
+(def matrix-tags [:matrix :pmatrix :vmatrix :Vmatrix])
+
+(apply def-environment-default matrix-tags)
+
+(dorun (map #(add-example! % [%
+                              "a" [:lower 0] :amp  "a" [:lower 1]
+                              :next
+                              "a" [:lower 2] :amp "a" [:lower 3]])
+            matrix-tags))
+
 ;; demo 
 
 (defn- demo [& args]
@@ -298,3 +314,5 @@
     (spit f s)
     (compile-tex f)
     (open-file "resources/temp.pdf")))
+
+
