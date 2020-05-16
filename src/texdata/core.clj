@@ -4,6 +4,10 @@
             [expound.alpha :as expound]
             [texdata.compile :refer [compile-tex open-file]]))
 
+(def temp-file "/Users/naka/Documents/work/clojure/lib/texdata/resources/temp.tex")
+
+(def temp-pdf-file
+  "/Users/naka/Documents/work/clojure/lib/texdata/resources/temp.pdf")
 
 ;; example for each command and better error message via expound. 
 
@@ -202,6 +206,32 @@
 
 (def-nornaml-default :usepackage)
 
+;; color and text formatting
+
+(defcmd :color :normal [[_ col & args]]
+  (format "\\textcolor{%s}{%s}" col (apply tex args)))
+
+(add-example! :color  [:color "red" "This text is red."])
+
+(def-nornaml-default :textbf :textit :underline :emph)
+
+(def-environment-default :flushleft :flushright :center)
+
+;; blank spaces
+
+(def-nornaml-default :hspace :vspace)
+
+;; lists
+
+(->> [:itemize :enumerate]
+     (map (fn [k]
+            (def-environment-default k)
+            (add-example! k
+                          [k
+                           :item "item 1"
+                           :item "item 2"])))
+     dorun)
+
 ;; basic math
 
 (defcmd :lower :normal
@@ -244,75 +274,105 @@
 (def-single-command-map
   {:eq "="})
 
+(defcmd :binom :normal [[_ x y]]
+  (format "\\binom{%s}{%s}" (tex x) (tex y)))
+
+(add-example! :binom [:binom 4 3])
+
+;; math operators
+
+(def math-operators [:cos :displaystyle :cos :csc :displaystyle :csc :exp :displaystyle :exp :ker :displaystyle :ker :limsup :displaystyle :limsup :min :displaystyle :min :sinh :displaystyle :sinh :arcsin :displaystyle :arcsin :cosh :displaystyle :cosh :deg :displaystyle :deg :gcd :displaystyle :gcd :lg :displaystyle :lg :ln :displaystyle :ln :Pr :displaystyle :Pr :sup :arctan :displaystyle :arctan :cot :det :displaystyle :det :hom :displaystyle :hom :lim :log :displaystyle :log :sec :tan :displaystyle :tan :arg :displaystyle :arg :coth :displaystyle :coth :dim :displaystyle :dim :liminf :displaystyle :liminf :max :displaystyle :max :sin :displaystyle :sin :tanh])
+
+(def-single-command-map {:sp "\\,"})
+
+;; math fonts
+
+(->> [:mathcal :mathfrak :mathbb :mathnormal :mathrm :mathit :mathbf
+      :mathsf :mathtt]
+     (map #(def-nornaml-default %))
+     dorun)
+
+;; sections chapters
+
+(->> [:title :author :date :section]
+     (map #(def-nornaml-default %))
+     dorun)
+
+(def chapter-single-commands
+  [:today :maketitle])
+
 ;; table
 
 (s/def ::table-spec (s/cat :cmd keyword?
                            :pos string?
                            :body (s/* any?)))
 
-(defcmd :table :environment [data]
-  {:pre [(s/valid? ::table-spec data)]}
-  (let [{:keys [cmd pos body]} (s/conform ::table-spec data)]
-    (env-string (name cmd)
-                (format "[%s]%s" pos  (apply tex body)))))
+        (defcmd :table :environment [data]
+          {:pre [(s/valid? ::table-spec data)]}
+          (let [{:keys [cmd pos body]} (s/conform ::table-spec data)]
+            (env-string (name cmd)
+                        (format "[%s]%s" pos  (apply tex body)))))
 
-(defcmd :tabular :environment [data]
-  {:pre [(s/valid? ::table-spec data)]}
-  (let [{:keys [cmd pos body]} (s/conform ::table-spec data)]
-    (env-string (name cmd)
-                (format "{%s}%s" pos  (apply tex body)))))
+        (defcmd :tabular :environment [data]
+          {:pre [(s/valid? ::table-spec data)]}
+          (let [{:keys [cmd pos body]} (s/conform ::table-spec data)]
+            (env-string (name cmd)
+                        (format "{%s}%s" pos  (apply tex body)))))
 
-(defcmd :array :environment [data]
-  {:pre [(s/valid? ::table-spec data)]}
-  (let [{:keys [cmd pos body]} (s/conform ::table-spec data)]
-    (env-string (name cmd)
-                (format "{%s}%s" pos  (apply tex body)))))
+        (defcmd :array :environment [data]
+          {:pre [(s/valid? ::table-spec data)]}
+          (let [{:keys [cmd pos body]} (s/conform ::table-spec data)]
+            (env-string (name cmd)
+                        (format "{%s}%s" pos  (apply tex body)))))
 
-(def-single-command-map {:next "\\\\"
-                         :amp "&"})
+        (def-single-command-map {:next "\\\\"
+                                 :amp "&"})
 
-(add-example! :table [:table "htb"
-                      [:tabular "cc"
-                       1 :amp 2 :next
-                       3 :amp 4]])
+        (add-example! :table [:table "htb"
+                              [:tabular "cc"
+                               1 :amp 2 :next
+                               3 :amp 4]])
 
-(add-example! :tabular [:table "htb"
-                        [:tabular "cc"
-                         1 :amp 2 :next
-                         3 :amp 4]])
+        (add-example! :tabular [:table "htb"
+                                [:tabular "cc"
+                                 1 :amp 2 :next
+                                 3 :amp 4]])
 
-(add-example! :array [:array "l" 1 :next 2])
+        (add-example! :array [:array "l" 1 :next 2])
 
-;; left and right
+        ;; left and right
 
-(def-single-command-map {:left-curly "\\{"
-                         :right-curly "\\}"
-                         :left-box "["
-                         :right-box "]"})
+        (def-single-command-map {:left-curly "\\{"
+                                 :right-curly "\\}"
+                                 :left-box "["
+                                 :right-box "]"})
 
-;; matrix
+        ;; matrix
 
-(def matrix-tags [:matrix :pmatrix :vmatrix :Vmatrix])
+        (def matrix-tags [:matrix :pmatrix :vmatrix :Vmatrix])
 
-(apply def-environment-default matrix-tags)
+        (apply def-environment-default matrix-tags)
 
-(dorun (map #(add-example! % [%
-                              "a" [:lower 0] :amp  "a" [:lower 1]
-                              :next
-                              "a" [:lower 2] :amp "a" [:lower 3]])
-            matrix-tags))
+        (dorun (map #(add-example! % [%
+                                      "a" [:lower 0] :amp  "a" [:lower 1]
+                                      :next
+                                      "a" [:lower 2] :amp "a" [:lower 3]])
+                    matrix-tags))
 
-;; demo 
+        ;; demo 
 
-(defn- demo [& args]
-  (let [f "resources/temp.tex"
-        s (tex [:documentclass "article"]
-               [:usepackage "amsmath"]
-               [:usepackage "amssymb"]
-               [:document
-                [:Huge (apply tex args)]])]
-    (spit f s)
-    (compile-tex f)
-    (open-file "resources/temp.pdf")))
+        (defn- demo [& args]
+          (let [f "resources/temp.tex"
+                s (tex [:documentclass "article"]
+                       [:usepackage "amsmath"]
+                       [:usepackage "amssymb"]
+                       [:usepackage "color"]
+                       [:document
+                        [:Huge (apply tex args)]])]
+            (spit f s)
+            (compile-tex f)
+            (open-file "resources/temp.pdf")))
+
+
 
 
