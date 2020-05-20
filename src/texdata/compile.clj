@@ -13,7 +13,7 @@
      :siblings siblings}))
 
 (defn compile-tex [path &{:keys [cmd] :or {cmd "pdflatex"}}]
-  (let [f (file path)
+  (let [f (io/file path)
         {parent :parent s :name} (file-data f)
         {:keys [exit out]}    (with-sh-dir parent
                                 (sh cmd s))]

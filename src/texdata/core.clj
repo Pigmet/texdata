@@ -282,18 +282,12 @@
 
 ;; math fonts
 
-(->> [:mathcal :mathfrak :mathbb :mathnormal :mathrm :mathit :mathbf
-      :mathsf :mathtt]
-     (map #(def-nornaml-default %))
-     dorun)
+( def-nornaml-default :mathcal :mathfrak :mathbb :mathnormal :mathrm :mathit :mathbf
+ :mathsf :mathtt)
 
 ;; sections chapters
 
-;; TODO : add :*section etc 
-
-(->> [:title :author :date :part :*part :chapter :*chapter :section :*section :subsection :*subsection :subsubsection :*subsubsection :paragraph :*paragraph :subparagraph :*subparagraph ]
-     (map #(def-nornaml-default %))
-     dorun)
+( def-nornaml-default :title :author :date :part :*part :chapter :*chapter :section :*section :subsection :*subsection :subsubsection :*subsubsection :paragraph :*paragraph :subparagraph :*subparagraph )
 
 (def chapter-single-commands
   [:today :maketitle])
@@ -356,6 +350,7 @@
                               "a" [:lower 2] :amp "a" [:lower 3]])
             matrix-tags))
 
+
 ;; demo 
 
 (def temp-file "/Users/naka/Documents/work/clojure/lib/texdata/resources/temp.tex")
@@ -364,7 +359,7 @@
   "/Users/naka/Documents/work/clojure/lib/texdata/resources/temp.pdf")
 
 (defn- demo [& args]
-  (let [f "resources/temp.tex"
+  (let [f temp-file
         s (tex [:documentclass "article"]
                [:usepackage "amsmath"]
                [:usepackage "amssymb"]
@@ -373,4 +368,7 @@
                 [:Huge (apply tex args)]])]
     (spit f s)
     (compile-tex f)
-    (open-file "resources/temp.pdf")))
+    (open-file temp-pdf-file)))
+
+
+
