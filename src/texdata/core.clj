@@ -197,11 +197,23 @@
   (let [{cl :class opt :opt} (s/conform ::documentclass-spec data)]
     (format "\\documentclass[%s]{%s}" (join "," opt) cl)))
 
+(add-example! :documentclass
+              [:documentclass "article" :opt ["12pt"]])
+
 (def-environment-default :document :environment
   :equation :equation* :align :align*
   :Huge :huge :small :normalsize)
 
 (def-nornaml-default :usepackage)
+
+(defcmd :geometry :normal [[tag & args]]
+  (format "\\%s{%s}" (name tag) (join "," args)))
+
+(add-example! :geometry [:geometry "a4paper"
+                         "total={170mm,257mm}"
+                         "left=20mm"
+                         "top=20mm"
+                         ])
 
 ;; color and text formatting
 
@@ -284,12 +296,12 @@
 
 ;; math fonts
 
-( def-nornaml-default :mathcal :mathfrak :mathbb :mathnormal :mathrm :mathit :mathbf
- :mathsf :mathtt)
+(def-nornaml-default :mathcal :mathfrak :mathbb :mathnormal :mathrm :mathit :mathbf
+  :mathsf :mathtt)
 
 ;; sections chapters
 
-( def-nornaml-default :title :author :date :part :*part :chapter :*chapter :section :*section :subsection :*subsection :subsubsection :*subsubsection :paragraph :*paragraph :subparagraph :*subparagraph )
+(def-nornaml-default :title :author :date :part :*part :chapter :*chapter :section :*section :subsection :*subsection :subsubsection :*subsubsection :paragraph :*paragraph :subparagraph :*subparagraph )
 
 (def chapter-single-commands
   [:today :maketitle])
@@ -354,7 +366,7 @@
 
 ;; demo
 
-(defn demo
+(defn- demo
   "Given valid tex string, write it to a file and displays the result
   of its compilation."
   [s]
