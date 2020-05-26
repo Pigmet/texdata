@@ -3,7 +3,8 @@
             [clojure.string :refer [join trim] :as st]
             [clojure.java.io :as io]
             [clojure.java.shell :refer [sh with-sh-dir]]
-            [expound.alpha :as expound]))
+            [expound.alpha :as expound]
+            [texdata.compile :refer [compile-tex]]))
 
 ;; example for each command and better error message via expound. 
 
@@ -357,27 +358,17 @@
   "Given valid tex string, write it to a file and displays the result
   of its compilation."
   [s]
-  (let [f (doto
-              (io/file "resources/temp.tex")
-            (.createNewFile))
-        path (.getAbsolutePath f)
-        fname (.getName f)
-        pdf (-> (st/split fname (re-pattern ".tex"))
-                first
-                (str ".pdf"))
-        {:keys [exit out] :as res} (with-sh-dir "resources"
-                                     (sh "pdflatex" fname))]
-    (spit path s)
-    (if (= 0 exit)
-      (with-sh-dir "resources"
-        (sh "open" pdf))
-      res)))
+  (let [f "resources/temp.tex"
+        pdf "resources/temp.pdf"]
+    (spit f s)
+    (compile-tex f )
+    (sh "open" pdf)))
 
 (comment
 
   (demo (tex [:documentclass "article"]
              [:document
-              [:Huge "yay yay yay "]]))
+              [:Huge "yay yay yay hey"]]))
 
 
   )
