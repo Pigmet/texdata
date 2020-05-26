@@ -1,17 +1,13 @@
 (ns texdata.view
-  (:require [texdata.core :reder [tex]]
+  (:require [texdata.core :refer [tex example]]
             [clojure.java.shell :as sh])
   (:import (java.io File)))
 
-(defn- create-temp-file [label extension]
-  (let [f (doto (File/createTempFile label
-                                     extension
-                                     (new File "resources"))
-            (.deleteOnExit))]
-    (.getAbsoluteFile f)))
+;; TODO : quickly display the result of compilation of tex data. 
 
-;;(create-temp-file "temp" ".tex")
-
-
+(let [f (File/createTempFile "temp" "tex" (new File "resources"))
+      pdf (File/createTempFile "temp" "pdf" (new File "resources")) ]
+  (spit f (tex [:documentclass "article"]
+               [:document "yay"])))
 
 

@@ -1,8 +1,9 @@
 (ns texdata.core
   (:require [clojure.spec.alpha :as s]
-            [clojure.string :refer [join trim]]
-            [expound.alpha :as expound]
-            [texdata.compile :refer [compile-tex open-file]]))
+            [clojure.string :refer [join trim] :as st]
+            [clojure.java.io :as io]
+            [clojure.java.shell :refer [sh with-sh-dir]]
+            [expound.alpha :as expound]))
 
 ;; example for each command and better error message via expound. 
 
@@ -350,25 +351,33 @@
                               "a" [:lower 2] :amp "a" [:lower 3]])
             matrix-tags))
 
+;; demo
 
-;; demo 
+(defn demo
+  "Given valid tex string, write it to a file and displays the result
+  of its compilation."
+  [s]
+  (let [f (doto
+              (io/file "resources/temp.tex")
+            (.createNewFile))
+        path (.getAbsolutePath f)
+        fname (.getName f)
+        pdf (-> (st/split fname (re-pattern ".tex"))
+                first
+                (str ".pdf"))
+        {:keys [exit out] :as res} (with-sh-dir "resources"
+                                     (sh "pdflatex" fname))]
+    (spit path s)
+    (if (= 0 exit)
+      (with-sh-dir "resources"
+        (sh "open" pdf))
+      res)))
 
-(def temp-file "/Users/naka/Documents/work/clojure/lib/texdata/resources/temp.tex")
+(comment
 
-(def temp-pdf-file
-  "/Users/naka/Documents/work/clojure/lib/texdata/resources/temp.pdf")
-
-(defn- demo [& args]
-  (let [f temp-file
-        s (tex [:documentclass "article"]
-               [:usepackage "amsmath"]
-               [:usepackage "amssymb"]
-               [:usepackage "color"]
-               [:document
-                [:Huge (apply tex args)]])]
-    (spit f s)
-    (compile-tex f)
-    (open-file temp-pdf-file)))
+  (demo (tex [:documentclass "article"]
+             [:document
+              [:Huge "yay yay yay "]]))
 
 
-
+  )
